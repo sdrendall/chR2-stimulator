@@ -22,7 +22,7 @@ unsigned long blockDuration[numBlocks] = {2, 3, 3, 4};
 unsigned long pulseWidth[numBlocks] = {200, 0, 500, 250};
 
 // Stimulation Frequency in Hz
-unsigned long stimFrequency[numBlocks] = {1, 0, 1, 2};
+unsigned long stimFrequency[numBlocks] = {2, 0, 1, 2};
 
 // Stimulation power (percentage)
 float stimPower[numBlocks] = {0, 0, 20, 100};
@@ -55,7 +55,12 @@ unsigned long stimPeriod[numBlocks];
 // -----     Functions     -----//
 void calculateTriggerDelay(int block) {
   // Convert Hz to ms
+<<<<<<< HEAD
   stimPeriod[block] = (1/stimFrequency[block])*1000;
+=======
+  unsigned long stimPeriod = (1/stimFrequency[block])*1000;
+  debugOut(String("stimPeriod = ") + stimPeriod);
+>>>>>>> 71864a1f0f5260bd1e901c7d5c2d93207bcdbb23
   // Calculate triggerDelay
   triggerDelay[block] = stimPeriod - pulseWidth[block];
 }
@@ -64,6 +69,13 @@ void logEvent(String msg) {
   Serial.print("[TIME]: ");
   Serial.print(millis());
   Serial.print(" [LOG]: ");
+  Serial.println(msg);
+}
+
+void debugOut(String msg) {
+  Serial.print("[TIME]: ");
+  Serial.print(millis());
+  Serial.print(" [DEBUG]: ");
   Serial.println(msg);
 }
 
@@ -120,7 +132,8 @@ void stopStimulation() {
 
 
 void startBlock(int block) {
-  logEvent(String("Starting Block ") + block);
+  logEvent(String("Starting Block ") + (block + 1));
+  debugOut(String("Trigger Delay: ") + triggerDelay[block]);
   // set current block to specified block
   currBlock = block;
   // check if I should stimulate
@@ -186,6 +199,7 @@ for (int i = 0; i < numBlocks; i++) {
 } 
   
   // Until start conditions are added
+  delay(5000);
   runStimulation();
 }
   
@@ -194,7 +208,7 @@ void loop() {
   // Set up something to include start conditions.  Button Press?
   
   // Update block when scheduled
-  if (activeExperiment && currBlock <= millis()) {
+  if (activeExperiment && currBlockEnds <= millis()) {
     startNextBlock();
   }
     
