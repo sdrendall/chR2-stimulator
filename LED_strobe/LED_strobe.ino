@@ -49,11 +49,13 @@ boolean stimulating = 0;
 const int numPins = lastPin - firstPin + 1;
 int PINS[numPins];
 
+//For Debugging
+unsigned long stimPeriod[numBlocks];
 
 // -----     Functions     -----//
 void calculateTriggerDelay(int block) {
   // Convert Hz to ms
-  float stimPeriod = (1/stimFrequency[block])*1000;
+  stimPeriod[block] = (1/stimFrequency[block])*1000;
   // Calculate triggerDelay
   triggerDelay[block] = stimPeriod - pulseWidth[block];
 }
@@ -177,6 +179,11 @@ void setup(){
 
   // Initialize serial communication
   Serial.begin(9600);
+  
+  // Print stim periods.  For Debugging
+for (int i = 0; i < numBlocks; i++) {
+  debugOut(String("Stimulation Period[") + i + String("] = ") + stimPeriod[i]);
+} 
   
   // Until start conditions are added
   runStimulation();
