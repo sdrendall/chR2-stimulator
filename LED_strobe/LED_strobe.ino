@@ -92,11 +92,12 @@ void turnPinsOn() {
 }
 
 
+// pulseWidth and triggerDelay in ms
 void scheduleNextPinEvent() {
   if (pinsOn) {
-    nextPinEvent = millis()/1000 + pulseWidth[currBlock];
+    nextPinEvent = micros()/1000 + pulseWidth[currBlock];
   } else {
-    nextPinEvent = millis()/1000 + triggerDelay[currBlock];
+    nextPinEvent = micros()/1000 + triggerDelay[currBlock];
   }
 }
 
