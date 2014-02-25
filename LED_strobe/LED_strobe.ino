@@ -19,10 +19,10 @@ boolean stimulate[numBlocks] = {1, 0, 1, 1};
 unsigned long blockDuration[numBlocks] = {2, 3, 3, 4};
 
 // Pulse width in milliseconds
-unsigned long pulseWidth[numBlocks] = {200, 0, 500, 250};
+unsigned long pulseWidth[numBlocks] = {200, 0, 500, 100};
 
 // Stimulation Frequency in Hz
-unsigned long stimFrequency[numBlocks] = {2, 0, 1, 2};
+float stimFrequency[numBlocks] = {1, 0, 1, 2};
 
 // Stimulation power (percentage)
 float stimPower[numBlocks] = {0, 0, 20, 100};
@@ -35,9 +35,8 @@ const int lastPin = 13;
 
 
 // ----- Program Parameters (do not edit) -----//
-int triggerDelay[numBlocks];
-
 int currBlock = -1;
+unsigned long triggerDelay[numBlocks];
 unsigned long currBlockEnds;
 unsigned long nextPinEvent;
 
@@ -50,19 +49,14 @@ const int numPins = lastPin - firstPin + 1;
 int PINS[numPins];
 
 //For Debugging
-unsigned long stimPeriod[numBlocks];
+float stimPeriod[numBlocks];
 
 // -----     Functions     -----//
 void calculateTriggerDelay(int block) {
-  // Convert Hz to ms
-<<<<<<< HEAD
-  stimPeriod[block] = (1/stimFrequency[block])*1000;
-=======
-  unsigned long stimPeriod = (1/stimFrequency[block])*1000;
-  debugOut(String("stimPeriod = ") + stimPeriod);
->>>>>>> 71864a1f0f5260bd1e901c7d5c2d93207bcdbb23
+  // Convert Hz to us
+  stimPeriod[block] = (1/stimFrequency[block])*1000000;
   // Calculate triggerDelay
-  triggerDelay[block] = stimPeriod - pulseWidth[block];
+  triggerDelay[block] = stimPeriod[block] - pulseWidth[block];
 }
   
 void logEvent(String msg) {
@@ -106,12 +100,12 @@ void turnPinsOn() {
 }
 
 
-// pulseWidth and triggerDelay in ms
+// pulseWidth and triggerDelay in us
 void scheduleNextPinEvent() {
   if (pinsOn) {
-    nextPinEvent = micros()/1000 + pulseWidth[currBlock];
+    nextPinEvent = micros() + pulseWidth[currBlock];
   } else {
-    nextPinEvent = micros()/1000 + triggerDelay[currBlock];
+    nextPinEvent = micros() + triggerDelay[currBlock];
   }
 }
 
@@ -176,6 +170,11 @@ void setup(){
     blockDuration[i] = blockDuration[i] * 1000;
   }
   
+  // Convert Pulse Width to microseconds
+  for (int i = 0; i < numBlocks; i++) {
+    pulseWidth[i] = pulseWidth[i]*1000;
+  }
+  
   // Overwrite block parameters where !stimulate
   for (int i = 0; i < numBlocks; i++){
     if (!stimulate[i]) {
@@ -193,13 +192,14 @@ void setup(){
   // Initialize serial communication
   Serial.begin(9600);
   
-  // Print stim periods.  For Debugging
-for (int i = 0; i < numBlocks; i++) {
-  debugOut(String("Stimulation Period[") + i + String("] = ") + stimPeriod[i]);
-} 
-  
-  // Until start conditions are added
-  delay(5000);
+//  // Print stim periods.  For Debugging
+//  for (int i = 0; i < numBlocks; i++) {
+//  debugOut(String("Seconds Period[") + i + String("] = ") + (1/stimFrequency[i]));
+//  debugOut(String("Stimulation Period[") + i + String("] = ") + stimPeriod[i]);
+//  } 
+
+// Until Start Conditions are added
+  delay(1000);
   runStimulation();
 }
   
@@ -208,12 +208,12 @@ void loop() {
   // Set up something to include start conditions.  Button Press?
   
   // Update block when scheduled
-  if (activeExperiment && currBlockEnds <= millis()) {
+  if (activeExperiment && millis() >= currBlockEnds) {
     startNextBlock();
   }
     
-  // Check Pins when scheduled
-  if (stimulating && (micros()/1000 >= nextPinEvent)) {
+  // Check Pins when scheduled, pin events use micros()
+  if (stimulating && (micros() >= nextPinEvent)) {
     updatePins();
   }
 }
