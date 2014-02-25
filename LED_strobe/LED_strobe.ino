@@ -74,6 +74,14 @@ void debugOut(String msg) {
 }
 
 
+void errOut (String err) {
+  Serial.print("[TIME]: ");
+  Serial.print(millis());
+  Serial.print(" [ERROR]: ");
+  Serial.println(err);
+}
+ 
+  
 void updatePins() {
   if (pinsOn) {
     turnPinsOff();
@@ -157,6 +165,44 @@ void startNextBlock() {
   } else {
     stopStimulation();
   } 
+}
+
+// read all available chars to a buffer and interpret any complete lines
+void readAndInterpretAvailableChars() {
+    while (Serial.available() > 0){
+    // read any available characters
+    char ch = Serial.read();
+    if (ch == '\n') {
+      // read any available characters
+      interpretInputString(serialLine);
+      serialLine = "";
+      break; // don't interpret more than one line before returning
+    } else {
+      serialLine += ch;
+    }
+  }
+}
+
+void interpretInputString(String input) {
+  // Remove leading and trailing whitespace
+  input.trim();
+  
+  if (input.length() == 1) {
+    switch (input[0]) {
+      // 'S' means start
+      case 'S':
+        debutOut("Recieved Start Command");
+        runStimulation();
+        break
+      case 'X':
+        debugOut("Recieved Stop Command");
+        stopStimulation();
+      default:
+        errOut("Unrecognized command!");
+    }
+  } else {
+    errOut("Commands to teensy must be one letter in length");
+  }
 }
   
 void setup(){
