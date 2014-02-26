@@ -48,6 +48,8 @@ boolean stimulating = 0;
 const int numPins = lastPin - firstPin + 1;
 int PINS[numPins];
 
+String serialLine;
+
 //For Debugging
 float stimPeriod[numBlocks];
 
@@ -170,14 +172,14 @@ void startNextBlock() {
 // read all available chars to a buffer and interpret any complete lines
 void readAndInterpretAvailableChars() {
     while (Serial.available() > 0){
-    // read any available characters
-    char ch = Serial.read();
-    if (ch == '\n') {
       // read any available characters
-      interpretInputString(serialLine);
-      serialLine = "";
-      break; // don't interpret more than one line before returning
-    } else {
+      char ch = Serial.read();
+      if (ch == '\n') {
+        // read any available characters
+        interpretInputString(serialLine);
+        serialLine = "";
+        break; // don't interpret more than one line before returning
+      } else {
       serialLine += ch;
     }
   }
@@ -191,12 +193,13 @@ void interpretInputString(String input) {
     switch (input[0]) {
       // 'S' means start
       case 'S':
-        debutOut("Recieved Start Command");
+        debugOut("Recieved Start Command");
         runStimulation();
-        break
+        break;
       case 'X':
         debugOut("Recieved Stop Command");
         stopStimulation();
+        break;
       default:
         errOut("Unrecognized command!");
     }
@@ -252,6 +255,7 @@ void setup(){
 
 void loop() {
   // Set up something to include start conditions.  Button Press?
+  readAndInterpretAvailableChars();
   
   // Update block when scheduled
   if (activeExperiment && millis() >= currBlockEnds) {

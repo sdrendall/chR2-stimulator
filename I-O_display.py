@@ -6,7 +6,7 @@ from twisted.protocols.basic import LineReceiver
 from twisted.internet.serialport import SerialPort
 from twisted.internet.protocol import ClientFactory
 from twisted.internet import stdio
-import os
+import os, sys
 import subprocess as sp
 
 # The port on ubuntu.  We'll change this later
@@ -17,19 +17,22 @@ class Root(object):
 
     def __init__(self):
         self.ioProtocol = IoCommandProtocol(self)
-        self.teensyProtocol = TeensyFactory(self).buildProtocol(None)
+        self.teensyProtocol = TeensyProtocol(self)
 
 
 class TeensyProtocol(LineReceiver):
 
     root = None
 
-    def __init__(self):
+    def __init__(self, root):
         self.log = openLogFile()
+        self.root = root
 
     def lineReceived(self, line):
+        sys.stdout.flush()
         self.log.write(line + '\n')
         self.root.ioProtocol.sendLine(line)
+        self.root.ioProtocol.transport.write('>>> ')
 
     def do_start(self):
         self.sendLine("S")
@@ -37,22 +40,6 @@ class TeensyProtocol(LineReceiver):
     def do_stop(self):
         self.sendLine("X")
 
-
-# Hacky way to catch connectionFailed failures
-class TeensyFactory(ClientFactory):
-
-    protocol = TeensyProtocol
-
-    def __init__(self, root):
-        self.root = root
-
-    def clientConnectionFailed(self, reason):
-        root.ioProtocol.sendLine("Connection to Teensy Failed!")
-
-    def buildProtocol(self, addr):
-        proto = ClientFactory().buildProtocol(addr)
-        proto.root = self.root
-        return proto
 
 class IoCommandProtocol(LineReceiver):
     from os import linesep as delimiter
@@ -73,24 +60,23 @@ class IoCommandProtocol(LineReceiver):
     def parseLine(self, line):
         # Split it up
         allArgs = line.split()
-        command = lower(allArgs[0])
-        args = allArgs[:1]
+        command = allArgs[0].lower()
+        args = allArgs[1:]
 
         # Send it off
         self.sendCommandToTeensy(command, args)
 
     def sendCommandToTeensy(self, command, args):
-        self.root.teensyProtocol.runCommand(command)
 
         try:
-            method = getattr(self, "do_" + command)
+            method = getattr(self.root.teensyProtocol, "do_" + command)
         except AttributeError, e:
             self.sendLine("[Error]: Command not recognized")
         else:
             try:
-                method()
+                method(*args)
             except Exception, e:
-                self.sendLine("[Error]: " + e)
+                self.sendLine("[Error]: " + str(e))
 
 
 
