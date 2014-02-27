@@ -1,4 +1,3 @@
-
 #include <SPI.h>
 // ----- User Defined Experiment Parameters -----//
 
@@ -80,7 +79,9 @@ void calculateTriggerDelay(int block) {
   // Calculate pulseWidth
   pulseWidth[block] = stimPeriod[block] - triggerDelay[block];
 }
-  
+
+
+// Logging Functions
 void logEvent(String msg) {
   Serial.print("[TIME]: ");
   Serial.print(millis());
@@ -101,7 +102,8 @@ void errOut (String err) {
   Serial.print(" [ERROR]: ");
   Serial.println(err);
 } 
-  
+
+// Pin control functions
 void updatePins() {
   if (pinsOn) {
     turnPinsOff();
@@ -134,24 +136,26 @@ void scheduleNextPinEvent() {
   }
 }
 
+// SPI resistor control functions
 void updateLedPower() {
   resValue = (stimPower[currBlock]/100)*255;
-  writeValueToResistor();
+  writeValueToResistor(resValue);
 }
 
-void writeValueToResistor() {
-  debugOut(String("Setting res Value to ") + resValue) ;
+void writeValueToResistor(int value) {
+  debugOut(String("Setting res Value to ") + value) ;
   // Set Slave to LOW
   digitalWrite(slaveSelectPin, LOW);
   // Send Command Byte "writeBoth"
   SPI.transfer(writeBoth);
   // Send Value Byte
-  SPI.transfer(resValue);
+  SPI.transfer(value);
   // Set Slave to HIGH
   digitalWrite(slaveSelectPin, HIGH);
   debugOut("Res Value Set");
 }
 
+// State control functions
 void runStimulation() {
   logEvent("Starting Stimulation");
   activeExperiment = true;
@@ -202,6 +206,15 @@ void startNextBlock() {
   } 
 }
 
+void startManualMode() {
+  if (activeExperiment) {
+    stopStimulation();
+  }
+}
+  
+
+
+// Command parsing and execution functions
 // read all available chars to a buffer and interpret any complete lines
 void readAndInterpretAvailableChars() {
     while (Serial.available() > 0){
@@ -219,28 +232,61 @@ void readAndInterpretAvailableChars() {
 }
 
 void interpretInputString(String input) {
+  String command, argin;
+  long int arg;
   // Remove leading and trailing whitespace
   input.trim();
   
   if (input.length() == 1) {
-    switch (input[0]) {
+    command = input;
+    arg = -1;
+  } else if (input.indexOf(':') == 1) {
+     // parameter value
+    int i = input.indexOf(':');
+    command = input.substring(0, i);
+    argin = input.substring(i+1);
+    argin.trim();
+    arg = argin.toInt();
+  } else {
+    errOut(String("Unexpected Input: \"") + input + String("\""));
+  }
+  executeCommand(command, arg);
+}
+
+void executeCommand(String command, long int arg) {
+  switch (command[0]) {
       // 'S' means start
       case 'S':
         debugOut("Recieved Start Command");
         runStimulation();
         break;
+      // 'X' means stop
       case 'X':
         debugOut("Recieved Stop Command");
         stopStimulation();
         break;
+      // 'M' means enter manual mode
+      case 'M':
+        startManualMode();
+        break;
+      // 'P' is for POWAH
+      case 'P':
+        writeValueToResistor(arg);
+        break;
+      // 'O' is on
+      case 'O':
+        turnPinsOn();
+        break;
+      // 'F' is off
+      case 'F':
+        turnPinsOff();
+        break;        
       default:
         errOut("Unrecognized command!");
-    }
-  } else {
-    errOut("Commands to teensy must be one letter in length");
   }
 }
-  
+
+// setup and loop
 void setup(){
   // Specify pins as outputs
   for(int i = 0; i < numPins; i++){
