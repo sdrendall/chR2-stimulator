@@ -18,6 +18,13 @@ const byte shutDownBoth = B00100011;
 int resValue = 0;
 
 // ---- Functions ---- //
+void debugOut(String msg) {
+  Serial.print("[TIME]: ");
+  Serial.print(millis());
+  Serial.print(" [DEBUG]: ");
+  Serial.println(msg);
+}
+
 void updateResistorValue() {
   setNextResValue();
   writeValueToResistor();
@@ -29,6 +36,7 @@ void setNextResValue() {
   } else {
     resValue = 0;
   }
+  debugOut(resValue);
 }
 
 void writeValueToResistor() {
@@ -71,4 +79,6 @@ void loop() {
   
   // Report Input Pin Value
   readInputPin();
+  
+  delay(100);
 }

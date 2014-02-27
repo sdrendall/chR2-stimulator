@@ -1,10 +1,11 @@
 
+#include <SPI.h>
 // ----- User Defined Experiment Parameters -----//
 
 // The number of blocks in the experiment.
 // Each block represents a specific stimulation frequency and pulse width
 // Over a specified duration
-const int numBlocks = 4;
+const int numBlocks = 9;
 
 // Block Parameters.  Each parameter consists of a list of values corresponding to the
 // value of that parameter in each respective block.
@@ -13,37 +14,51 @@ const int numBlocks = 4;
 // Boolean.  0 indicates no stimulation.
 // pulseWidth, stimFrequency and stimPower will be set automatically
 // if stimulate[block] == 0 
-boolean stimulate[numBlocks] = {1, 0, 1, 1};
+boolean stimulate[numBlocks] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 // Block durations, in seconds
-unsigned long blockDuration[numBlocks] = {2, 3, 3, 4};
+unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
 
 // Pulse width in milliseconds
-unsigned long pulseWidth[numBlocks] = {200, 0, 500, 100};
+unsigned long pulseWidth[numBlocks] = {250, 250, 250, 250, 0, 250, 250, 250, 250};
 
 // Stimulation Frequency in Hz
-float stimFrequency[numBlocks] = {1, 0, 1, 2};
+float stimFrequency[numBlocks] = {1, 1, 1, 1, 1, 2, 2, 2, 2};
 
 // Stimulation power (percentage)
-float stimPower[numBlocks] = {0, 0, 20, 100};
+float stimPower[numBlocks] = {100, 75, 50, 25, 0, 25, 50, 75, 100};
 
 
 // Pins, specify first and last pin to be used.
-const int firstPin = 13;
-const int lastPin = 13;
+const int firstPin = 14;
+const int lastPin = 14;
 
 
 
 // ----- Program Parameters (do not edit) -----//
+// Containers for holding information about blocks
 int currBlock = -1;
 unsigned long triggerDelay[numBlocks];
+
+// Timers, for scheduling
 unsigned long currBlockEnds;
 unsigned long nextPinEvent;
 
+// Booleans for decision making
 boolean activeExperiment = false;
 boolean pinsOn = false;
 boolean stimulating = 0;
 
+// Define some Command Bytes
+const byte writeBoth = B00010011;
+const byte shutDownBoth = B00100011;
+
+// container for resistor value
+int resValue = 255;
+
+// Slave Select pin is 10 on the Teensy
+// The rest of the pins are configured automatically
+const int slaveSelectPin = 10;
 
 const int numPins = lastPin - firstPin + 1;
 int PINS[numPins];
@@ -54,11 +69,16 @@ String serialLine;
 float stimPeriod[numBlocks];
 
 // -----     Functions     -----//
+// The LED logic is inverted with respect to the teensy's output
+// For Matt's convenience, he will input the triggerDelay as pulseWidth
+// Here we will calculate the actual pulse width and set triggerDelay using pulseWidth
 void calculateTriggerDelay(int block) {
   // Convert Hz to us
   stimPeriod[block] = (1/stimFrequency[block])*1000000;
-  // Calculate triggerDelay
-  triggerDelay[block] = stimPeriod[block] - pulseWidth[block];
+  // set triggerDelay
+  triggerDelay[block] = pulseWidth[block];
+  // Calculate pulseWidth
+  pulseWidth[block] = stimPeriod[block] - triggerDelay[block];
 }
   
 void logEvent(String msg) {
@@ -75,14 +95,12 @@ void debugOut(String msg) {
   Serial.println(msg);
 }
 
-
 void errOut (String err) {
   Serial.print("[TIME]: ");
   Serial.print(millis());
   Serial.print(" [ERROR]: ");
   Serial.println(err);
-}
- 
+} 
   
 void updatePins() {
   if (pinsOn) {
@@ -93,7 +111,6 @@ void updatePins() {
   scheduleNextPinEvent();
 }
 
-
 void turnPinsOff() {
   for(int i = 0; i < numPins; i++) {
     digitalWrite(PINS[i], LOW);
@@ -101,14 +118,12 @@ void turnPinsOff() {
   pinsOn = false;  
 }
 
-
 void turnPinsOn() {
   for (int i = 0; i < numPins; i++) {
     digitalWrite(PINS[i], HIGH);
   }
   pinsOn = true;
 }
-
 
 // pulseWidth and triggerDelay in us
 void scheduleNextPinEvent() {
@@ -119,6 +134,23 @@ void scheduleNextPinEvent() {
   }
 }
 
+void updateLedPower() {
+  resValue = (stimPower[currBlock]/100)*255;
+  writeValueToResistor();
+}
+
+void writeValueToResistor() {
+  debugOut(String("Setting res Value to ") + resValue) ;
+  // Set Slave to LOW
+  digitalWrite(slaveSelectPin, LOW);
+  // Send Command Byte "writeBoth"
+  SPI.transfer(writeBoth);
+  // Send Value Byte
+  SPI.transfer(resValue);
+  // Set Slave to HIGH
+  digitalWrite(slaveSelectPin, HIGH);
+  debugOut("Res Value Set");
+}
 
 void runStimulation() {
   logEvent("Starting Stimulation");
@@ -134,12 +166,13 @@ void stopStimulation() {
   logEvent("Stopped Stimulation");
 }  
 
-
 void startBlock(int block) {
   logEvent(String("Starting Block ") + (block + 1));
   debugOut(String("Trigger Delay: ") + triggerDelay[block]);
   // set current block to specified block
   currBlock = block;
+  // update LED power
+  updateLedPower();
   // check if I should stimulate
   if (stimulate[currBlock]) {
     stimulating = true;
@@ -241,15 +274,9 @@ void setup(){
   // Initialize serial communication
   Serial.begin(9600);
   
-//  // Print stim periods.  For Debugging
-//  for (int i = 0; i < numBlocks; i++) {
-//  debugOut(String("Seconds Period[") + i + String("] = ") + (1/stimFrequency[i]));
-//  debugOut(String("Stimulation Period[") + i + String("] = ") + stimPeriod[i]);
-//  } 
-
-// Until Start Conditions are added
-  delay(1000);
-  runStimulation();
+  // Setup SPI
+  pinMode(slaveSelectPin, OUTPUT);
+  SPI.begin();
 }
   
 
