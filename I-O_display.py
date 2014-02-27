@@ -34,11 +34,47 @@ class TeensyProtocol(LineReceiver):
         self.root.ioProtocol.sendLine(line)
         self.root.ioProtocol.transport.write('>>> ')
 
+
+    ## COMMANDS FOR THE TEENSY!
+
     def do_start(self):
+        """Start Stimulation Paradigm"""
         self.sendLine("S")
 
     def do_stop(self):
+        """Stop Ongoing Stimulation Paradigm"""
         self.sendLine("X")
+
+    def do_manual(self):
+        """Tell Teensy to Enter Manual Mode"""
+        self.sendLine("M")
+
+    
+    def do_power(self, val1, val2=None, dP=1, dt=.5):
+        """
+        Manual Mode Only!!!
+
+        Set the Power to a specified value (0-255)
+        If a second value is specified, queue a sequence of power changes
+        by default, power will increment by dP=1 every dt=.5 seconds.  These
+        values can be specified as well."""
+        if val2:
+            powerSequence = range(val1, val2+dP, dP)
+            for i, val in enumerate(powerSequence):
+                from twisted.intenet import reactor
+                reactor.callLater(dt*(i+1), self.do_power, val)
+        else:
+            self.sendLine("P:" + val1)
+
+    def do_on(self):
+        """ Turn on the LED """
+        self.sendLine("O")
+
+    def do_off(self):
+        """ Turn off the LED """
+        self.sendLine("F")
+
+
 
 
 class IoCommandProtocol(LineReceiver):
