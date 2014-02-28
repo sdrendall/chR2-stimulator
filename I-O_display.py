@@ -6,6 +6,7 @@ from twisted.protocols.basic import LineReceiver
 from twisted.internet.serialport import SerialPort
 from twisted.internet.protocol import ClientFactory
 from twisted.internet import stdio
+from math import floor
 import os, sys
 import subprocess as sp
 
@@ -50,7 +51,7 @@ class TeensyProtocol(LineReceiver):
         self.sendLine("M")
 
     
-    def do_power(self, val1, val2=None, dP=1, dt=.5):
+    def do_power(self, val1, val2=None, dP=None, dt=.5):
         """
         Manual Mode Only!!!
 
@@ -59,12 +60,25 @@ class TeensyProtocol(LineReceiver):
         by default, power will increment by dP=1 every dt=.5 seconds.  These
         values can be specified as well."""
         if val2:
+            val1, val2 = int(val1), int(val2)
+            if not dP:
+                # Set dP to be ascending or descending based on
+                # val1 and val2
+                if val2 > val1:
+                    dP = 1
+                else:
+                    dP = -1
             powerSequence = range(val1, val2+dP, dP)
             for i, val in enumerate(powerSequence):
-                from twisted.intenet import reactor
-                reactor.callLater(dt*(i+1), self.do_power, val)
+                from twisted.internet import reactor
+                reactor.callLater(dt*i, self.do_power, str(val))
         else:
-            self.sendLine("P:" + val1)
+            val1 = floor((float(val1)/100)*255)
+            self.sendLine("P:" + str(val1))
+
+    def do_freq(self, freq):
+        """ Set the teensy's PWM frequency """
+        self.sendLine("R:" + freq)
 
     def do_on(self):
         """ Turn on the LED """

@@ -55,6 +55,10 @@ const byte shutDownBoth = B00100011;
 // container for resistor value
 int resValue = 255;
 
+// container for PWM duty cycle
+int dutyCycle = 255;
+const int gatePin = 22;
+
 // Slave Select pin is 10 on the Teensy
 // The rest of the pins are configured automatically
 const int slaveSelectPin = 10;
@@ -138,8 +142,16 @@ void scheduleNextPinEvent() {
 
 // SPI resistor control functions
 void updateLedPower() {
-  resValue = (stimPower[currBlock]/100)*255;
-  writeValueToResistor(resValue);
+  dutyCycle = (stimPower[currBlock]/100)*255;
+  setFETDutyCycle(dutyCycle);
+}
+
+void setFETDutyCycle(int dc) {
+  // Invert duty cycle, transistor logic is 
+  // inverse
+  dc = 255 - dc;
+  debugOut(dc);
+  analogWrite(gatePin, dc);
 }
 
 void writeValueToResistor(int value) {
@@ -211,8 +223,6 @@ void startManualMode() {
     stopStimulation();
   }
 }
-  
-
 
 // Command parsing and execution functions
 // read all available chars to a buffer and interpret any complete lines
@@ -271,7 +281,8 @@ void executeCommand(String command, long int arg) {
         break;
       // 'P' is for POWAH
       case 'P':
-        writeValueToResistor(arg);
+        //writeValueToResistor(arg);
+        setFETDutyCycle(arg);
         break;
       // 'O' is on
       case 'O':
@@ -281,6 +292,9 @@ void executeCommand(String command, long int arg) {
       case 'F':
         turnPinsOff();
         break;        
+      case 'R':
+        analogWriteFrequency(gatePin, arg);
+        break;
       default:
         errOut("Unrecognized command!");
   }
@@ -293,6 +307,9 @@ void setup(){
     PINS[i] = i + firstPin;
     pinMode(PINS[i], OUTPUT);
   }
+  pinMode(gatePin, OUTPUT);
+  analogWriteFrequency(gatePin, 200);
+  
   // Convert block durations to milliseconds
   for (int i = 0; i < numBlocks; i++) {
     blockDuration[i] = blockDuration[i] * 1000;
