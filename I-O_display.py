@@ -27,14 +27,39 @@ class TeensyProtocol(LineReceiver):
 
     def __init__(self, root):
         self.log = openLogFile()
+        self.data = openDataFile()
         self.root = root
 
-    def lineReceived(self, line):
-        sys.stdout.flush()
-        self.log.write(line + '\n')
-        self.root.ioProtocol.sendLine(line)
-        self.root.ioProtocol.transport.write('>>> ')
 
+    def lineReceived(self, line):
+        if self.isData(line):
+            # log data to the csv
+            self.logData(line)
+        else:
+            # otherwise write it to the log
+            # and print it to stdout
+            self.log.write(line + '\n')
+            self.root.ioProtocol.sendLine(line)
+            self.root.ioProtocol.transport.write('>>> ')
+
+    def logData(line):
+        timestamp, event, value = line.split()[1:]
+        if event == "start":
+            if not self.data:
+                self.data = openDataFile()
+        elif event == "stop":
+            self.data.close()
+        elif event == "led":
+            dataLine = "{},{}" + os.linesep
+            dataLine.format(timestamp, value)
+            self.data.write(dataLine)
+
+
+    def isData(line):
+    if line.split()[0] == "data":
+        return True
+    else:
+        return False
 
     ## COMMANDS FOR THE TEENSY!
 
@@ -150,9 +175,9 @@ def openDataFile():
     dt = datetime.datetime.now()
     dateString = "{:04}{:02}{:02}_{:02}{:02}".\
         format(dt.year, dt.month, dt.day, dt.hour, dt.minute)
-    # open logFile
-    logFile = open(os.path.join("{}_{}.log".format(baseName, dateString)), "w")
-
+    # open dataFile
+    dataFile = open(os.path.join("{}_{}.log".format(baseName, dateString)), "w")
+    return dataFile
 
 def openLogFile():
     log = open('eventLog.txt', 'a')
@@ -160,6 +185,7 @@ def openLogFile():
     log.write("-" * 15 + "\n")
     log.write(currentDateAndTime + "\n")
     return log
+
 
 def main():
     from twisted.internet import reactor

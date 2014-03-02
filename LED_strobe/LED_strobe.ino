@@ -31,6 +31,9 @@ unsigned long triggerDelay[numBlocks];
 unsigned long currBlockEnds;
 unsigned long nextLEDEvent;
 
+// For logging
+unsigned long startTime = millis();
+
 
 // Booleans for decision making
 boolean activeExperiment = false;
@@ -74,8 +77,8 @@ void errOut(String err) {
 } 
 
 void document(String parameter, float value) {
-  Serial.print("doc ");
-  Serial.print(millis());
+  Serial.print("data ");
+  Serial.print(startTime);
   Serial.print(String(" ") + parameter + String(" "));
   Serial.println(value);
 }
@@ -136,6 +139,7 @@ void setLEDPower(float power) {
 void runStimulation() {
   logEvent("Starting Stimulation");
   activeExperiment = true;
+  startTime = millis();
   startBlock(0);
 }
 
