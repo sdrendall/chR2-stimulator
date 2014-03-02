@@ -78,7 +78,7 @@ void errOut(String err) {
 
 void document(String parameter, float value) {
   Serial.print("data ");
-  Serial.print(startTime);
+  Serial.print(millis() - startTime);
   Serial.print(String(" ") + parameter + String(" "));
   Serial.println(value);
 }

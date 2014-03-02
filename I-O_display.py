@@ -11,7 +11,7 @@ import os, sys, datetime
 import subprocess as sp
 
 # The port on ubuntu.  We'll change this later
-teensyPort = "/dev/ttyACM1"
+teensyPort = "/dev/ttyACM0"
 
 # The Root object, he ties it all together
 class Root(object):
@@ -42,7 +42,7 @@ class TeensyProtocol(LineReceiver):
             self.root.ioProtocol.sendLine(line)
             self.root.ioProtocol.transport.write('>>> ')
 
-    def logData(line):
+    def logData(self, line):
         timestamp, event, value = line.split()[1:]
         if event == "start":
             if not self.data:
@@ -50,16 +50,16 @@ class TeensyProtocol(LineReceiver):
         elif event == "stop":
             self.data.close()
         elif event == "led":
-            dataLine = "{},{}" + os.linesep
-            dataLine.format(timestamp, value)
+            dataLine = "{},{}".format(timestamp, value)
+            dataLine = dataLine + os.linesep
             self.data.write(dataLine)
 
 
-    def isData(line):
-    if line.split()[0] == "data":
-        return True
-    else:
-        return False
+    def isData(self,line):
+        if line.split()[0] == "data":
+           return True
+        else:
+           return False
 
     ## COMMANDS FOR THE TEENSY!
 
@@ -176,7 +176,7 @@ def openDataFile():
     dateString = "{:04}{:02}{:02}_{:02}{:02}".\
         format(dt.year, dt.month, dt.day, dt.hour, dt.minute)
     # open dataFile
-    dataFile = open(os.path.join("{}_{}.log".format(baseName, dateString)), "w")
+    dataFile = open(os.path.join("{}_{}.csv".format(baseName, dateString)), "w")
     return dataFile
 
 def openLogFile():
