@@ -10,11 +10,6 @@ const int numBlocks = 9;
 // value of that parameter in each respective block.
 // THE NUMBER OF ENTRIES IN EACH LIST MUST BE EQUAL TO numBlocks!
 
-// Boolean.  0 indicates no stimulation.
-// pulseWidth, stimFrequency and stimPower will be set automatically
-// if stimulate[block] == 0 
-boolean stimulate[numBlocks] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-
 // Block durations, in seconds
 unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
 
@@ -28,12 +23,6 @@ float stimFrequency[numBlocks] = {1, 1, 1, 1, 1, 2, 2, 2, 2};
 float stimPower[numBlocks] = {100, 75, 50, 25, 0, 25, 50, 75, 100};
 
 
-// Pins, specify first and last pin to be used.
-const int firstPin = 22;
-const int lastPin = 22;
-
-
-
 // ----- Program Parameters (do not edit) -----//
 // Containers for holding information about blocks
 int currBlock = -1;
@@ -41,48 +30,26 @@ unsigned long triggerDelay[numBlocks];
 
 // Timers, for scheduling
 unsigned long currBlockEnds;
-unsigned long nextPinEvent;
+unsigned long nextLEDEvent;
 
 // Booleans for decision making
 boolean activeExperiment = false;
-boolean pinsOn = false;
-boolean stimulating = 0;
+boolean ledOn = true;
 
-// Define some Command Bytes
-const byte writeBoth = B00010011;
-const byte shutDownBoth = B00100011;
-
-// container for resistor value
-int resValue = 255;
-
-// container for PWM duty cycle
+// containers for PWM
 int maxPower = 255*75/100;
+int currPower;
 int dutyCycle = 255;
 const int gatePin = 22;
 
-// Slave Select pin is 10 on the Teensy
-// The rest of the pins are configured automatically
-const int slaveSelectPin = 10;
-
-const int numPins = lastPin - firstPin + 1;
-int PINS[numPins];
-
 String serialLine;
 
-//For Debugging
-float stimPeriod[numBlocks];
-
-// -----     Functions     -----//
-// The LED logic is inverted with respect to the teensy's output
-// For Matt's convenience, he will input the triggerDelay as pulseWidth
-// Here we will calculate the actual pulse width and set triggerDelay using pulseWidth
+// -----     Functions     ----- //
 void calculateTriggerDelay(int block) {
   // Convert Hz to us
-  stimPeriod[block] = (1/stimFrequency[block])*1000000;
-  // set triggerDelay
-  triggerDelay[block] = pulseWidth[block];
+  float stimPeriod = (1/stimFrequency[block])*1000000;
   // Calculate pulseWidth
-  pulseWidth[block] = stimPeriod[block] - triggerDelay[block];
+  triggerDelay[block] = stimPeriod - triggerDelay[block];
 }
 
 // Logging Functions
@@ -100,71 +67,66 @@ void debugOut(String msg) {
   Serial.println(msg);
 }
 
-void errOut (String err) {
+void errOut(String err) {
   Serial.print("[TIME]: ");
   Serial.print(millis());
   Serial.print(" [ERROR]: ");
   Serial.println(err);
 } 
 
-// Pin control functions
-void updatePins() {
-  if (pinsOn) {
-    turnPinsOff();
+void document(String parameter, float value) {
+  Serial.print("doc ");
+  Serial.print(millis());
+  Serial.print(String(" ") + parameter + String(" "));
+  Serial.println(value);
+}
+
+// LED and Pin control functions
+void toggleLED() {
+  if (ledOn) {
+    turnLEDOff();
   } else {
-    turnPinsOn();
+    turnLEDOn();
   }
-  scheduleNextPinEvent();
+  if (activeExperiment) {
+    scheduleNextLEDEvent();
+  }
 }
 
-void turnPinsOff() {
-  for(int i = 0; i < numPins; i++) {
-    digitalWrite(PINS[i], LOW);
-  }
-  pinsOn = false;  
+void turnLEDOff() {
+  // Have to do something about setting power here...
+  // digitalWrite alone will fail under certain PWM conditions
+  digitalWrite(gatePin, HIGH);
+  document("led", 0);
+  ledOn = false;
 }
 
-void turnPinsOn() {
-  for (int i = 0; i < numPins; i++) {
-    digitalWrite(PINS[i], HIGH);
-  }
-  pinsOn = true;
+void turnLEDOn() {
+  // Use a global for current power
+  setLEDPower(currPower);
+  document("led", currPower);
+  ledOn = true;
 }
 
 // pulseWidth and triggerDelay in us
-void scheduleNextPinEvent() {
-  if (pinsOn) {
-    nextPinEvent = micros() + pulseWidth[currBlock];
+void scheduleNextLEDEvent() {
+  if (ledOn) {
+    nextLEDEvent = micros() + pulseWidth[currBlock];
   } else {
-    nextPinEvent = micros() + triggerDelay[currBlock];
+    nextLEDEvent = micros() + triggerDelay[currBlock];
   }
 }
 
-// SPI resistor control functions
-void updateLedPower() {
-  dutyCycle = (stimPower[currBlock]/100)*255;
-  setFETDutyCycle(dutyCycle);
+// PWM functions
+void updateCurrPower() {
+  currPower = stimPower[currBlock];
 }
 
-void setFETDutyCycle(int dc) {
-  // Invert duty cycle, transistor logic is 
-  // inverse
-  dc = 255 - dc;
-  debugOut(dc);
+void setLEDPower(float power) {
+  // Convert power (a percentage of maxPower) to dutycyle,
+  int dc = (power/100)*maxPower;
+  // write to pin
   analogWrite(gatePin, dc);
-}
-
-void writeValueToResistor(int value) {
-  debugOut(String("Setting res Value to ") + value) ;
-  // Set Slave to LOW
-  digitalWrite(slaveSelectPin, LOW);
-  // Send Command Byte "writeBoth"
-  SPI.transfer(writeBoth);
-  // Send Value Byte
-  SPI.transfer(value);
-  // Set Slave to HIGH
-  digitalWrite(slaveSelectPin, HIGH);
-  debugOut("Res Value Set");
 }
 
 // State control functions
@@ -176,31 +138,25 @@ void runStimulation() {
 
 void stopStimulation() {
   activeExperiment = false;
-  stimulating = false;
-  turnPinsOff();
+  turnLEDOff();
   currBlock = -1;
+  document("stop", -1);
   logEvent("Stopped Stimulation");
 }  
 
 void startBlock(int block) {
   logEvent(String("Starting Block ") + (block + 1));
-  debugOut(String("Trigger Delay: ") + triggerDelay[block]);
+  document("start", -1);
   // set current block to specified block
   currBlock = block;
-  // update LED power
-  updateLedPower();
-  // check if I should stimulate
-  if (stimulate[currBlock]) {
-    stimulating = true;
-  } else {
-    stimulating = false;
-  }
+  // update currPower
+  updateCurrPower();
   // Schedule the ending for this block
   currBlockEnds = millis() + blockDuration[currBlock];
   // Start block by turning off all pins and scheduling next event
   // Blocks will always start on a trigger delay
-  turnPinsOff();
-  scheduleNextPinEvent();
+  turnLEDOff();
+  scheduleNextLEDEvent();
 }
 
 // Function to start next block
@@ -281,16 +237,15 @@ void executeCommand(String command, long int arg) {
         break;
       // 'P' is for POWAH
       case 'P':
-        //writeValueToResistor(arg);
-        setFETDutyCycle(arg);
+        setLEDPower(arg);
         break;
       // 'O' is on
       case 'O':
-        turnPinsOn();
+        turnLEDOn();
         break;
       // 'F' is off
       case 'F':
-        turnPinsOff();
+        turnLEDOff();
         break;        
       case 'R':
         analogWriteFrequency(gatePin, arg);
@@ -305,13 +260,11 @@ void executeCommand(String command, long int arg) {
 
 // setup and loop
 void setup(){
-  // Specify pins as outputs
-  for(int i = 0; i < numPins; i++){
-    PINS[i] = i + firstPin;
-    pinMode(PINS[i], OUTPUT);
-  }
+  // Set up PWM
   pinMode(gatePin, OUTPUT);
   analogWriteFrequency(gatePin, 200);
+  currPower = maxPower;
+  turnLEDOff();
   
   // Convert block durations to milliseconds
   for (int i = 0; i < numBlocks; i++) {
@@ -322,16 +275,7 @@ void setup(){
   for (int i = 0; i < numBlocks; i++) {
     pulseWidth[i] = pulseWidth[i]*1000;
   }
-  
-  // Overwrite block parameters where !stimulate
-  for (int i = 0; i < numBlocks; i++){
-    if (!stimulate[i]) {
-      pulseWidth[i] = 0;
-      stimFrequency[i] = 1/blockDuration[i];
-      stimPower[i] = 0;
-    }
-  }
-  
+
   // Calculate Trigger Delays
   for (int i = 0; i < numBlocks; i++){
     calculateTriggerDelay(i);
@@ -339,10 +283,6 @@ void setup(){
 
   // Initialize serial communication
   Serial.begin(9600);
-  
-  // Setup SPI
-  pinMode(slaveSelectPin, OUTPUT);
-  SPI.begin();
 }
   
 
@@ -354,9 +294,9 @@ void loop() {
   if (activeExperiment && millis() >= currBlockEnds) {
     startNextBlock();
   }
-    
-  // Check Pins when scheduled, pin events use micros()
-  if (stimulating && (micros() >= nextPinEvent)) {
-    updatePins();
+
+  // Toggle LED when necessary, uses us
+  if (activeExperiment && micros() >= nextLEDEvent) {
+    toggleLED();
   }
 }
