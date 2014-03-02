@@ -11,7 +11,7 @@ import os, sys
 import subprocess as sp
 
 # The port on ubuntu.  We'll change this later
-teensyPort = "/dev/ttyACM0"
+teensyPort = "/dev/ttyACM1"
 
 # The Root object, he ties it all together
 class Root(object):
@@ -73,7 +73,6 @@ class TeensyProtocol(LineReceiver):
                 from twisted.internet import reactor
                 reactor.callLater(dt*i, self.do_power, str(val))
         else:
-            val1 = floor((float(val1)/100)*255)
             self.sendLine("P:" + str(val1))
 
     def do_freq(self, freq):
@@ -105,7 +104,6 @@ class TeensyProtocol(LineReceiver):
                 from twisted.internet import reactor
                 reactor.callLater(dt*i, self.do_pot, str(val))
         else:
-            val1 = floor((float(val1)/100)*255)
             self.sendLine("T:" + str(val1))
 
 

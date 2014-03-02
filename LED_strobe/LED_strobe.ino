@@ -1,4 +1,3 @@
-#include <SPI.h>
 // ----- User Defined Experiment Parameters -----//
 
 // The number of blocks in the experiment.
@@ -32,14 +31,14 @@ unsigned long triggerDelay[numBlocks];
 unsigned long currBlockEnds;
 unsigned long nextLEDEvent;
 
+
 // Booleans for decision making
 boolean activeExperiment = false;
 boolean ledOn = true;
 
 // containers for PWM
-int maxPower = 255*75/100;
-int currPower;
-int dutyCycle = 255;
+float maxPower = 255*75/100;
+float currPower = 100; //% of maxPower
 const int gatePin = 22;
 
 String serialLine;
@@ -96,6 +95,7 @@ void toggleLED() {
 void turnLEDOff() {
   // Have to do something about setting power here...
   // digitalWrite alone will fail under certain PWM conditions
+  pinMode(gatePin, OUTPUT);
   digitalWrite(gatePin, HIGH);
   document("led", 0);
   ledOn = false;
@@ -124,8 +124,11 @@ void updateCurrPower() {
 
 void setLEDPower(float power) {
   // Convert power (a percentage of maxPower) to dutycyle,
-  int dc = (power/100)*maxPower;
+  debugOut(String("maxPower") + maxPower);
+  int dc = 255 - (power/100)*maxPower;
+  debugOut(String("dc: ") + dc);
   // write to pin
+  pinMode(gatePin, OUTPUT);
   analogWrite(gatePin, dc);
 }
 
@@ -142,7 +145,7 @@ void stopStimulation() {
   currBlock = -1;
   document("stop", -1);
   logEvent("Stopped Stimulation");
-}  
+}
 
 void startBlock(int block) {
   logEvent(String("Starting Block ") + (block + 1));
@@ -250,9 +253,6 @@ void executeCommand(String command, long int arg) {
       case 'R':
         analogWriteFrequency(gatePin, arg);
         break;
-      case 'T':
-        writeValueToResistor(arg);
-        break;
       default:
         errOut("Unrecognized command!");
   }
@@ -263,7 +263,6 @@ void setup(){
   // Set up PWM
   pinMode(gatePin, OUTPUT);
   analogWriteFrequency(gatePin, 200);
-  currPower = maxPower;
   turnLEDOff();
   
   // Convert block durations to milliseconds
