@@ -7,7 +7,7 @@ from twisted.internet.serialport import SerialPort
 from twisted.internet.protocol import ClientFactory
 from twisted.internet import stdio
 from math import floor
-import os, sys
+import os, sys, datetime
 import subprocess as sp
 
 # The port on ubuntu.  We'll change this later
@@ -121,7 +121,6 @@ class IoCommandProtocol(LineReceiver):
     def lineReceived(self, line):
         # Ignore blank lines
         if not line: return
-
         self.parseLine(line)
         self.transport.write('>>> ')
 
@@ -130,7 +129,6 @@ class IoCommandProtocol(LineReceiver):
         allArgs = line.split()
         command = allArgs[0].lower()
         args = allArgs[1:]
-
         # Send it off
         self.sendCommandToTeensy(command, args)
 
@@ -147,10 +145,17 @@ class IoCommandProtocol(LineReceiver):
                 self.sendLine("[Error]: " + str(e))
 
 
+def openDataFile():
+    baseName = "dataLog"
+    dt = datetime.datetime.now()
+    dateString = "{:04}{:02}{:02}_{:02}{:02}".\
+        format(dt.year, dt.month, dt.day, dt.hour, dt.minute)
+    # open logFile
+    logFile = open(os.path.join("{}_{}.log".format(baseName, dateString)), "w")
 
 
 def openLogFile():
-    log = open('stimLog.txt', 'a')
+    log = open('eventLog.txt', 'a')
     currentDateAndTime = sp.check_output("date", shell=True)
     log.write("-" * 15 + "\n")
     log.write(currentDateAndTime + "\n")
