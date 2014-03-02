@@ -29,8 +29,8 @@ float stimPower[numBlocks] = {100, 75, 50, 25, 0, 25, 50, 75, 100};
 
 
 // Pins, specify first and last pin to be used.
-const int firstPin = 14;
-const int lastPin = 14;
+const int firstPin = 22;
+const int lastPin = 22;
 
 
 
@@ -56,6 +56,7 @@ const byte shutDownBoth = B00100011;
 int resValue = 255;
 
 // container for PWM duty cycle
+int maxPower = 255*75/100;
 int dutyCycle = 255;
 const int gatePin = 22;
 
@@ -83,7 +84,6 @@ void calculateTriggerDelay(int block) {
   // Calculate pulseWidth
   pulseWidth[block] = stimPeriod[block] - triggerDelay[block];
 }
-
 
 // Logging Functions
 void logEvent(String msg) {
@@ -294,6 +294,9 @@ void executeCommand(String command, long int arg) {
         break;        
       case 'R':
         analogWriteFrequency(gatePin, arg);
+        break;
+      case 'T':
+        writeValueToResistor(arg);
         break;
       default:
         errOut("Unrecognized command!");

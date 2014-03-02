@@ -88,6 +88,26 @@ class TeensyProtocol(LineReceiver):
         """ Turn off the LED """
         self.sendLine("F")
 
+    def do_pot(self, val1, val2=None, dV=None, dt=.5):
+        """ Adjust the potentiometer
+            Input is similar to power adjustment """
+        if val2:
+            val1, val2 = int(val1), int(val2)
+            if not dV:
+                # Set dV to be ascending or descending based on
+                # val1 and val2
+                if val2 > val1:
+                    dV = 1
+                else:
+                    dV = -1
+            valSequence = range(val1, val2+dV, dV)
+            for i, val in enumerate(valSequence):
+                from twisted.internet import reactor
+                reactor.callLater(dt*i, self.do_pot, str(val))
+        else:
+            val1 = floor((float(val1)/100)*255)
+            self.sendLine("T:" + str(val1))
+
 
 
 
