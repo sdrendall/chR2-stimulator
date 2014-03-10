@@ -100,9 +100,21 @@ class TeensyProtocol(LineReceiver):
         else:
             self.sendLine("P:" + str(val1))
 
-    def do_freq(self, freq):
+    def do_pwmfreq(self, freq):
         """ Set the teensy's PWM frequency """
         self.sendLine("R:" + freq)
+
+    def do_pulse(self):
+        """ Tell the teensy to start pulsing """
+        self.sendLine("U")
+
+    def do_freq(self, freq):
+        """ Set the pulse frequency """
+        self.sendLine("H:" + freq)
+
+    def do_pw(self, pw):
+        """ Set the pulse width """
+        self.sendLine("W:" + pw)
 
     def do_on(self):
         """ Turn on the LED """

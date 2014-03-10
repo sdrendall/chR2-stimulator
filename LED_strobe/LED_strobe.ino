@@ -34,25 +34,39 @@ unsigned long nextLEDEvent;
 // For logging
 unsigned long startTime = millis();
 
-
 // Booleans for decision making
 boolean activeExperiment = false;
 boolean ledOn = true;
 
 // containers for PWM
 float maxPower = 255*75/100;
-float currPower = 100; //% of maxPower
 const int gatePin = 22;
+
+// global variables used as output parameters
+float currPower = 100; //% of maxPower
+float currFreq;
+unsigned long currTriggerDelay;
+unsigned long currPulseWidth;
 
 String serialLine;
 
 // -----     Functions     ----- //
-void calculateTriggerDelay(int block) {
-  // Convert Hz to us
-  float stimPeriod = (1/stimFrequency[block])*1000000;
-  // Calculate pulseWidth
-  triggerDelay[block] = stimPeriod - triggerDelay[block];
+void calculateTriggerDelayForEachBlock(int block) {
+  for (int i = 0; i < numBlocks; i++){
+    triggerDelay[block] = calculateTriggerDelay(stimFrequency[i]);
+  }
 }
+
+// returns a trigger delay value based on a given frequency and pulse width
+unsigned long calculateTriggerDelay (float freq, unsigned long pw) {
+  // Convert Hz to us
+  unsigned long stimPeriod = (1/freq)*1000000;
+  // Calculate triggerDelay
+  unsigned long triggerDelay = stimPeriod - pw;
+  return triggerDelay;
+}
+
+
 
 // Logging Functions
 void logEvent(String msg) {
@@ -111,6 +125,15 @@ void turnLEDOn() {
   ledOn = true;
 }
 
+void updatePulseFrequency(float freq) {
+  currFreq = freq;
+}
+
+// Calculates the trigger delay based on
+// given pulse width and the currFreq
+void updatePulseWidth() {
+
+}
 // pulseWidth and triggerDelay in us
 void scheduleNextLEDEvent() {
   if (ledOn) {
@@ -126,13 +149,11 @@ void updateCurrPower() {
 }
 
 void setLEDPower(float power) {
-  // Convert power (a percentage of maxPower) to dutycyle,
-  debugOut(String("maxPower") + maxPower);
-  int dc = 255 - (power/100)*maxPower;
-  debugOut(String("dc: ") + dc);
-  // write to pin
-  pinMode(gatePin, OUTPUT);
-  analogWrite(gatePin, dc);
+  currPower = power;
+  // Update the LED's output if it is on
+  if (ledOn) {
+    turnLEDOn();
+  }
 }
 
 // State control functions
@@ -226,7 +247,7 @@ void interpretInputString(String input) {
   executeCommand(command, arg);
 }
 
-void executeCommand(String command, long int arg) {
+void executeCommand(String command, float arg) {
   switch (command[0]) {
       // 'S' means start
       case 'S':
@@ -253,10 +274,25 @@ void executeCommand(String command, long int arg) {
       // 'F' is off
       case 'F':
         turnLEDOff();
-        break;        
+        break;     
+      // 'R' changes the pwm frequency  
       case 'R':
-        analogWriteFrequency(gatePin, arg);
+        analogWriteFrequency(gatePin, int(arg));
         break;
+      // 'H' changes the pulse frequency
+      case 'H':
+        updatePulseFrequency(arg);
+        break;
+      // 'W' changes the pulse width
+      case 'W':
+        long int pw = arg;
+        updatePulseWidth(pw);
+        break;
+      // 'U' tells the teensy to start pulsing
+      case 'U':
+        startPulsing():
+        break;
+      // Return an error if an unexpected command is encountered
       default:
         errOut("Unrecognized command!");
   }
@@ -280,9 +316,7 @@ void setup(){
   }
 
   // Calculate Trigger Delays
-  for (int i = 0; i < numBlocks; i++){
-    calculateTriggerDelay(i);
-  }
+    calculateTriggerDelayForEachBlock();
 
   // Initialize serial communication
   Serial.begin(9600);
