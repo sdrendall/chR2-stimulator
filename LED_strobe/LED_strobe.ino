@@ -51,9 +51,9 @@ unsigned long currPulseWidth;
 String serialLine;
 
 // -----     Functions     ----- //
-void calculateTriggerDelayForEachBlock(int block) {
+void calculateTriggerDelayForEachBlock() {
   for (int i = 0; i < numBlocks; i++){
-    triggerDelay[block] = calculateTriggerDelay(stimFrequency[i], pulseWidth[i]);
+    triggerDelay[i] = calculateTriggerDelay(stimFrequency[i], pulseWidth[i]);
   }
 }
 
@@ -118,7 +118,7 @@ void turnLEDOff() {
 
 void turnLEDOn() {
   // Use a global for current power
-  setLEDPower(currPower);
+  resetLEDPower();
   document("led", currPower);
   ledOn = true;
 }
@@ -131,9 +131,9 @@ void updatePulseFrequency(float freq) {
 // given pulse width and the currFreq
 void updatePulseWidth(unsigned long pw) {
   currPulseWidth = pw;
-  
-
+  currTriggerDelay = calculateTriggerDelay(currFreq, currTriggerDelay);
 }
+
 // pulseWidth and triggerDelay in us
 void scheduleNextLEDEvent() {
   if (ledOn) {
@@ -144,15 +144,26 @@ void scheduleNextLEDEvent() {
 }
 
 // PWM functions
-void updateCurrPower() {
-  currPower = stimPower[currBlock];
+void updateCurrPower(float power) {
+  currPower = power;
+  // Reset the LED's output if it is already on
+  if (ledOn) {
+    resetLEDPower();
+  }
 }
 
-void setLEDPower(float power) {
-  currPower = power;
-  // Update the LED's output if it is on
-  if (ledOn) {
-    turnLEDOn();
+// resets the LED's power to currPower
+void resetLEDPower() {
+  if (currPower == 0) {
+    turnLEDOff();
+  } else {
+    // LED state is inverse to the pin's state
+    // invert power value here
+    int dc = 255 - (currPower/100)*255;
+    // Reset pin to avoid bugs
+    pinMode(gatePin, OUTPUT);
+    // Set new PWM duty cycle
+    analogWrite(gatePin, dc);
   }
 }
 
@@ -178,7 +189,7 @@ void startBlock(int block) {
   // set current block to specified block
   currBlock = block;
   // update currPower
-  updateCurrPower();
+  updateCurrPower(stimPower[currBlock]);
   // Schedule the ending for this block
   currBlockEnds = millis() + blockDuration[currBlock];
   // Start block by turning off all pins and scheduling next event
@@ -206,6 +217,12 @@ void startManualMode() {
   if (activeExperiment) {
     stopStimulation();
   }
+}
+
+void startPulsing() {
+  logEvent("Starting Manual Pulse");
+  activeExperiment = true;
+  toggleLED();
 }
 
 // Command parsing and execution functions
@@ -248,6 +265,8 @@ void interpretInputString(String input) {
 }
 
 void executeCommand(String command, float arg) {
+  // declared here for use with the pw (pulse width) command
+  unsigned long pw;
   switch (command[0]) {
       // 'S' means start
       case 'S':
@@ -265,7 +284,7 @@ void executeCommand(String command, float arg) {
         break;
       // 'P' is for POWAH
       case 'P':
-        setLEDPower(arg);
+        updateCurrPower(arg);
         break;
       // 'O' is on
       case 'O':
@@ -285,12 +304,12 @@ void executeCommand(String command, float arg) {
         break;
       // 'W' changes the pulse width
       case 'W':
-        unsigned long pw = arg;
+        pw = arg;
         updatePulseWidth(pw);
         break;
       // 'U' tells the teensy to start pulsing
       case 'U':
-        startPulsing():
+        startPulsing();
         break;
       // Return an error if an unexpected command is encountered
       default:
