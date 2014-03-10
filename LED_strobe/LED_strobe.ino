@@ -53,7 +53,7 @@ String serialLine;
 // -----     Functions     ----- //
 void calculateTriggerDelayForEachBlock(int block) {
   for (int i = 0; i < numBlocks; i++){
-    triggerDelay[block] = calculateTriggerDelay(stimFrequency[i]);
+    triggerDelay[block] = calculateTriggerDelay(stimFrequency[i], pulseWidth[i]);
   }
 }
 
@@ -65,8 +65,6 @@ unsigned long calculateTriggerDelay (float freq, unsigned long pw) {
   unsigned long triggerDelay = stimPeriod - pw;
   return triggerDelay;
 }
-
-
 
 // Logging Functions
 void logEvent(String msg) {
@@ -131,7 +129,9 @@ void updatePulseFrequency(float freq) {
 
 // Calculates the trigger delay based on
 // given pulse width and the currFreq
-void updatePulseWidth() {
+void updatePulseWidth(unsigned long pw) {
+  currPulseWidth = pw;
+  
 
 }
 // pulseWidth and triggerDelay in us
@@ -285,7 +285,7 @@ void executeCommand(String command, float arg) {
         break;
       // 'W' changes the pulse width
       case 'W':
-        long int pw = arg;
+        unsigned long pw = arg;
         updatePulseWidth(pw);
         break;
       // 'U' tells the teensy to start pulsing
