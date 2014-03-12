@@ -224,7 +224,9 @@ void startManualMode() {
 
 void startPulsing() {
   logEvent("Starting Manual Pulse");
-  activeExperiment = true;
+  if (! manualMode) {
+    startManualMode();
+  }
   toggleLED();
 }
 
@@ -326,7 +328,7 @@ void executeCommand(String command, float arg) {
 }
 
 // setup and loop
-void setup(){
+void setup() {
   // Set up PWM
   pinMode(gatePin, OUTPUT);
   analogWriteFrequency(gatePin, 200);
