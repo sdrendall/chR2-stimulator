@@ -36,6 +36,7 @@ unsigned long startTime = millis();
 
 // Booleans for decision making
 boolean activeExperiment = false;
+boolean manualMode = false;
 boolean ledOn = true;
 
 // containers for PWM
@@ -170,6 +171,7 @@ void resetLEDPower() {
 // State control functions
 void runStimulation() {
   logEvent("Starting Stimulation");
+  manualMode = false;
   activeExperiment = true;
   startTime = millis();
   startBlock(0);
@@ -217,6 +219,7 @@ void startManualMode() {
   if (activeExperiment) {
     stopStimulation();
   }
+  manualMode = true;
 }
 
 void startPulsing() {
@@ -309,6 +312,11 @@ void executeCommand(String command, float arg) {
         break;
       // 'U' tells the teensy to start pulsing
       case 'U':
+        // Stop any ongoing experiments
+        if (!manualMode || activeExperiment) {
+          logEvent("Warning!  Stopping current experiment and entering manual mode!");
+          startManualMode();
+        }
         startPulsing();
         break;
       // Return an error if an unexpected command is encountered
@@ -352,7 +360,7 @@ void loop() {
   }
 
   // Toggle LED when necessary, uses us
-  if (activeExperiment && micros() >= nextLEDEvent) {
+  if ((activeExperiment || manualMode) && micros() >= nextLEDEvent) {
     toggleLED();
   }
 }

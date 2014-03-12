@@ -50,6 +50,8 @@ class TeensyProtocol(LineReceiver):
         elif event == "stop":
             self.data.close()
         elif event == "led":
+            if not self.data:
+                self.data = openDataFile()
             dataLine = "{},{}".format(timestamp, value)
             dataLine = dataLine + os.linesep
             self.data.write(dataLine)
