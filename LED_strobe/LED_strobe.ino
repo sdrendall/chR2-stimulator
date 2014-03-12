@@ -103,7 +103,7 @@ void toggleLED() {
   } else {
     turnLEDOn();
   }
-  if (activeExperiment) {
+  if (activeExperiment || manualMode) {
     scheduleNextLEDEvent();
   }
 }
@@ -171,6 +171,7 @@ void resetLEDPower() {
 // State control functions
 void runStimulation() {
   logEvent("Starting Stimulation");
+  document("start", -1);
   manualMode = false;
   activeExperiment = true;
   startTime = millis();
@@ -179,6 +180,7 @@ void runStimulation() {
 
 void stopStimulation() {
   activeExperiment = false;
+  manualMode = false;
   turnLEDOff();
   currBlock = -1;
   document("stop", -1);
@@ -187,7 +189,6 @@ void stopStimulation() {
 
 void startBlock(int block) {
   logEvent(String("Starting Block ") + (block + 1));
-  document("start", -1);
   // set current block to specified block
   currBlock = block;
   // update currPower
@@ -224,6 +225,7 @@ void startManualMode() {
 
 void startPulsing() {
   logEvent("Starting Manual Pulse");
+  document("start", -1);
   if (! manualMode) {
     startManualMode();
   }
@@ -315,10 +317,10 @@ void executeCommand(String command, float arg) {
       // 'U' tells the teensy to start pulsing
       case 'U':
         // Stop any ongoing experiments
-        if (!manualMode || activeExperiment) {
+        if(activeExperiment) {
           logEvent("Warning!  Stopping current experiment and entering manual mode!");
-          startManualMode();
         }
+        startManualMode();
         startPulsing();
         break;
       // Return an error if an unexpected command is encountered

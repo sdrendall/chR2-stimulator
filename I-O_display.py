@@ -27,7 +27,7 @@ class TeensyProtocol(LineReceiver):
 
     def __init__(self, root):
         self.log = openLogFile()
-        self.data = openDataFile()
+        self.data = None
         self.root = root
 
 
@@ -45,10 +45,12 @@ class TeensyProtocol(LineReceiver):
     def logData(self, line):
         timestamp, event, value = line.split()[1:]
         if event == "start":
-            if not self.data:
-                self.data = openDataFile()
+            if self.data is not None:
+                self.closeDataFile()
+            self.data = openDataFile()
         elif event == "stop":
-            self.data.close()
+            if self.data:
+                self.closeDataFile()
         elif event == "led":
             if not self.data:
                 self.data = openDataFile()
@@ -56,6 +58,9 @@ class TeensyProtocol(LineReceiver):
             dataLine = dataLine + os.linesep
             self.data.write(dataLine)
 
+    def closeDataFile(self):
+        df, self.data = self.data, None
+        df.close()
 
     def isData(self,line):
         if line.split()[0] == "data":
@@ -139,8 +144,8 @@ class TeensyProtocol(LineReceiver):
                 else:
                     dV = -1
             valSequence = range(val1, val2+dV, dV)
+            from twisted.internet import reactor
             for i, val in enumerate(valSequence):
-                from twisted.internet import reactor
                 reactor.callLater(dt*i, self.do_pot, str(val))
         else:
             self.sendLine("T:" + str(val1))
