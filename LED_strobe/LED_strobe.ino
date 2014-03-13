@@ -138,9 +138,9 @@ void updatePulseWidth(unsigned long pw) {
 // pulseWidth and triggerDelay in us
 void scheduleNextLEDEvent() {
   if (ledOn) {
-    nextLEDEvent = micros() + pulseWidth[currBlock];
+    nextLEDEvent = micros() + currPulseWidth;
   } else {
-    nextLEDEvent = micros() + triggerDelay[currBlock];
+    nextLEDEvent = micros() + currTriggerDelay;
   }
 }
 
@@ -191,8 +191,11 @@ void startBlock(int block) {
   logEvent(String("Starting Block ") + (block + 1));
   // set current block to specified block
   currBlock = block;
-  // update currPower
+  // update stimulation parameters for this block
+  // currFreq must be updated before pulseWidth
+  currFreq = stimFrequency[currBlock];
   updateCurrPower(stimPower[currBlock]);
+  updatePulseWidth(pulseWidth[currBlocks]);
   // Schedule the ending for this block
   currBlockEnds = millis() + blockDuration[currBlock];
   // Start block by turning off all pins and scheduling next event
