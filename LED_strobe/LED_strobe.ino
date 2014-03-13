@@ -43,11 +43,11 @@ boolean ledOn = true;
 float maxPower = 255*75/100;
 const int gatePin = 22;
 
-// global variables used as output parameters
-float currPower = 100; //% of maxPower
-float currFreq;
-unsigned long currTriggerDelay;
-unsigned long currPulseWidth;
+// global variables used as output parameters, set to defaults
+float currPower = 40; //% of maxPower
+float currFreq = 1;
+unsigned long currTriggerDelay = 800;
+unsigned long currPulseWidth = 200;
 
 String serialLine;
 
@@ -61,7 +61,14 @@ void calculateTriggerDelayForEachBlock() {
 // returns a trigger delay value based on a given frequency and pulse width
 unsigned long calculateTriggerDelay (float freq, unsigned long pw) {
   // Convert Hz to us
-  unsigned long stimPeriod = (1/freq)*1000000;
+  // Convert float to long first
+  // Hz to ms
+  debugOut(String("freq: ") + freq);
+  float tFreq = (1/freq)*1000;
+  debugOut(String("tFreq: ") + tFreq);
+  // ms to us
+  unsigned long stimPeriod = tFreq*1000;
+  debugOut(String("stimPeriod: ") + stimPeriod);
   // Calculate triggerDelay
   unsigned long triggerDelay = stimPeriod - pw;
   return triggerDelay;
@@ -90,6 +97,9 @@ void errOut(String err) {
 } 
 
 void document(String parameter, float value) {
+  if (parameter == "start") {
+    startTime = millis();
+  }
   Serial.print("data ");
   Serial.print(millis() - startTime);
   Serial.print(String(" ") + parameter + String(" "));
@@ -98,13 +108,13 @@ void document(String parameter, float value) {
 
 // LED and Pin control functions
 void toggleLED() {
+  if (activeExperiment || manualMode) {
+    scheduleNextLEDEvent();
+  }
   if (ledOn) {
     turnLEDOff();
   } else {
     turnLEDOn();
-  }
-  if (activeExperiment || manualMode) {
-    scheduleNextLEDEvent();
   }
 }
 
@@ -126,13 +136,18 @@ void turnLEDOn() {
 
 void updatePulseFrequency(float freq) {
   currFreq = freq;
+  updatePulseWidth(currPulseWidth/1000); // Function takes pulse width in milliseconds
 }
 
 // Calculates the trigger delay based on
-// given pulse width and the currFreq
+// the given pulse width (IN MILLISECONDS!!) and the currFreq
+// Converts user entered value from milliseconds to microseconds
 void updatePulseWidth(unsigned long pw) {
-  currPulseWidth = pw;
-  currTriggerDelay = calculateTriggerDelay(currFreq, currTriggerDelay);
+  currPulseWidth = pw * 1000;
+  currTriggerDelay = calculateTriggerDelay(currFreq, currPulseWidth);
+  debugOut(String("Freq: ") + currFreq);
+  debugOut(String("PW: ") + currPulseWidth);
+  debugOut(String("TD: ") + currTriggerDelay);
 }
 
 // pulseWidth and triggerDelay in us
@@ -174,7 +189,6 @@ void runStimulation() {
   document("start", -1);
   manualMode = false;
   activeExperiment = true;
-  startTime = millis();
   startBlock(0);
 }
 
@@ -195,7 +209,7 @@ void startBlock(int block) {
   // currFreq must be updated before pulseWidth
   currFreq = stimFrequency[currBlock];
   updateCurrPower(stimPower[currBlock]);
-  updatePulseWidth(pulseWidth[currBlocks]);
+  updatePulseWidth(pulseWidth[currBlock]);
   // Schedule the ending for this block
   currBlockEnds = millis() + blockDuration[currBlock];
   // Start block by turning off all pins and scheduling next event
@@ -274,9 +288,10 @@ void interpretInputString(String input) {
   executeCommand(command, arg);
 }
 
-void executeCommand(String command, float arg) {
+void executeCommand(String command, long int arg) {
   // declared here for use with the pw (pulse width) command
   unsigned long pw;
+  float freq;
   switch (command[0]) {
       // 'S' means start
       case 'S':
@@ -310,7 +325,11 @@ void executeCommand(String command, float arg) {
         break;
       // 'H' changes the pulse frequency
       case 'H':
-        updatePulseFrequency(arg);
+        // Arg will be sent as mHz, convert back to Hz
+        freq = arg;
+        freq = freq/1000;
+        updatePulseFrequency(freq);
+        debugOut(String("freq in: ") + freq);
         break;
       // 'W' changes the pulse width
       case 'W':

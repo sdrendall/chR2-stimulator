@@ -1,4 +1,3 @@
-
 # This is the I/O display and manager for Matt Friese's ChR2 stimulator system
 # Sam Rendall
 
@@ -87,7 +86,7 @@ class TeensyProtocol(LineReceiver):
         """
         Manual Mode Only!!!
 
-        Set the Power to a specified value (0-255)
+        Set the Power to a specified value (0-100)
         If a second value is specified, queue a sequence of power changes
         by default, power will increment by dP=1 every dt=.5 seconds.  These
         values can be specified as well."""
@@ -117,6 +116,8 @@ class TeensyProtocol(LineReceiver):
 
     def do_freq(self, freq):
         """ Set the pulse frequency """
+        # Convert freq to mHz to allow for floating point transfer
+        freq = str(float(freq)*1000)
         self.sendLine("H:" + freq)
 
     def do_pw(self, pw):
