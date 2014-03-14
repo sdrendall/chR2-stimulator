@@ -13,13 +13,13 @@ const int numBlocks = 9;
 unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
 
 // Pulse width in milliseconds
-unsigned long pulseWidth[numBlocks] = {250, 250, 250, 250, 0, 250, 250, 250, 250};
+unsigned long pulseWidth[numBlocks] = {10, 10, 10, 10, 0, 20, 20, 250, 250};
 
 // Stimulation Frequency in Hz
-float stimFrequency[numBlocks] = {1, 1, 1, 1, 1, 2, 2, 2, 2};
+float stimFrequency[numBlocks] = {1, 2, 3, 5, 1, 5, 4, .5, .25};
 
 // Stimulation power (percentage)
-float stimPower[numBlocks] = {100, 75, 50, 25, 0, 25, 50, 75, 100};
+float stimPower[numBlocks] = {40, 45, 50, 60, 0, 25, 50, 75, 100};
 
 
 // ----- Program Parameters (do not edit) -----//
@@ -63,12 +63,9 @@ unsigned long calculateTriggerDelay (float freq, unsigned long pw) {
   // Convert Hz to us
   // Convert float to long first
   // Hz to ms
-  debugOut(String("freq: ") + freq);
-  float tFreq = (1/freq)*1000;
-  debugOut(String("tFreq: ") + tFreq);
+  unsigned long tFreq = (1/freq)*1000;
   // ms to us
   unsigned long stimPeriod = tFreq*1000;
-  debugOut(String("stimPeriod: ") + stimPeriod);
   // Calculate triggerDelay
   unsigned long triggerDelay = stimPeriod - pw;
   return triggerDelay;
@@ -145,17 +142,17 @@ void updatePulseFrequency(float freq) {
 void updatePulseWidth(unsigned long pw) {
   currPulseWidth = pw * 1000;
   currTriggerDelay = calculateTriggerDelay(currFreq, currPulseWidth);
-  debugOut(String("Freq: ") + currFreq);
-  debugOut(String("PW: ") + currPulseWidth);
-  debugOut(String("TD: ") + currTriggerDelay);
 }
 
 // pulseWidth and triggerDelay in us
+// LED EVENTS ARE SCHEDULED BEFORE LED STATED IS UPDATED!!
 void scheduleNextLEDEvent() {
   if (ledOn) {
-    nextLEDEvent = micros() + currPulseWidth;
-  } else {
+    // If the light is on, I'm about to turn it off.
     nextLEDEvent = micros() + currTriggerDelay;
+  } else {
+    // If the light is off, I'm about to turn it on
+    nextLEDEvent = micros() + currPulseWidth;
   }
 }
 
@@ -214,8 +211,8 @@ void startBlock(int block) {
   currBlockEnds = millis() + blockDuration[currBlock];
   // Start block by turning off all pins and scheduling next event
   // Blocks will always start on a trigger delay
-  turnLEDOff();
   scheduleNextLEDEvent();
+  turnLEDOff();
 }
 
 // Function to start next block
@@ -295,12 +292,10 @@ void executeCommand(String command, long int arg) {
   switch (command[0]) {
       // 'S' means start
       case 'S':
-        debugOut("Recieved Start Command");
         runStimulation();
         break;
       // 'X' means stop
       case 'X':
-        debugOut("Recieved Stop Command");
         stopStimulation();
         break;
       // 'M' means enter manual mode
@@ -329,7 +324,6 @@ void executeCommand(String command, long int arg) {
         freq = arg;
         freq = freq/1000;
         updatePulseFrequency(freq);
-        debugOut(String("freq in: ") + freq);
         break;
       // 'W' changes the pulse width
       case 'W':
@@ -361,11 +355,6 @@ void setup() {
   // Convert block durations to milliseconds
   for (int i = 0; i < numBlocks; i++) {
     blockDuration[i] = blockDuration[i] * 1000;
-  }
-  
-  // Convert Pulse Width to microseconds
-  for (int i = 0; i < numBlocks; i++) {
-    pulseWidth[i] = pulseWidth[i]*1000;
   }
 
   // Calculate Trigger Delays
