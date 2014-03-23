@@ -1,9 +1,30 @@
 #include experimentParameters.h
 
+// --- Global Variables -- Do not modify!! ---///
+
+// Booleans, describing state
+boolean activeExperiment = false;
+boolean manualMode = false;
+boolean ledOn[numLEDs] = false;
+boolean isBursting[numLEDs] = false;
+
+// Event times, for scheduling events
+unsigned long nextLEDEvent[numLEDs], nextBurstEvent[numLEDs];
+
+// Arrays for storing current parameter values for each LED
+float currFreq[numLEDs] = 10;
+float currBurstFreq[numLEDs] = 1;
+unsigned long currPulseWidth[numLEDs] = 10;
+unsigned long currTriggerDelay[numLEDs] = 90;
+unsigned long currBurstDuration[numLEDs] = 500;
+unsigned long currBurstInterim[numLEDs] = 500;
+
+
+
 // --- LED LOGIC ---
 void checkForLEDEvents() {
     // loop through LEDs
-    for(led = 0; led < numLEDs; led++) {
+    for(int led = 0; led < numLEDs; led++) {
         // Toggle LED when necessary, uses us
         if ((activeExperiment || manualMode) && micros() >= nextLEDEvent[led]) {
             toggleLED(led);
@@ -69,7 +90,7 @@ unsigned long calculateTriggerDelay(float freq, unsigned long pw) {
 
 // --- BURST LOGIC ---
 void checkForBurstEvents() {
-    for (led = 0; led < numLEDs; led++) {
+    for (int led = 0; led < numLEDs; led++) {
         if ((activeExperiment || manualMode) && millis() >= nextBurstEvent[led]) {
             toggleBurstState(led);
         }
@@ -98,12 +119,14 @@ void scheduleNextBurstEvent(int led) {
 void startBursting(int led) {
     // Start new LED train
     toggleLED(led);
+    isBursting = true;
 }
 
 void stopBursting(int led) {
     // override led schedule
     nextLEDEvent[led] = micros() + burstInterim[led]*1000;
     turnLEDoff(led);
+    isBursting = false;
 }
 
 // sets the led's currBurstInterim based on its
@@ -111,52 +134,4 @@ void stopBursting(int led) {
 void updateBurstInterim(int led) {
     unsigned long burstPeriod = (1/currBurstFreq[led])*1000;
     currBurstInterim[led] = burstPeriod - currBurstDuration[led];
-}
-
-
-// --- Block Logic ---
-void startNextBlock() {
-  currBlock++;
-  // If currBlock has reached numBlocks or is 0
-  // (-1 after incrementing),
-  // we shouldn't be stimulating
-  if (currBlock < numBlocks && currBlock > 0) {
-    startBlock(currBlock);
-  } else {
-    stopStimulation();
-  } 
-}
-
-void startBlock(int block) {
-    logEvent(String("Starting Block ") + (block + 1));
-    // set current block to specified block
-    currBlock = block;
-    // update stimulation parameters for this block
-    // currFreq must be updated before pulseWidth
-    updateStimParamsForEachLED();
-    // update the burst parameters for each LED
-    updateBurstParamsForEachLED();
-    // Schedule the ending for this block
-    currBlockEnds = millis() + blockDuration[currBlock];
-    // Start block by turning off all pins and scheduling next event
-    // Blocks will always start on a trigger delay
-    for(led = 0; led < numLEDs; led++) {
-        startBursting(led);
-    }
-}
-
-void updateStimParamsForEachLED() {
-    for(led = 0; led < numLEDs; led++){
-        currFreq[led] = exp_stimFrequency[led][currBlock];
-        currPulseWidth[led] = exp_pulseWidth[led][currBlock];
-        updateTriggerDelay(led);
-    }
-}
-
-void updateBurstParamsForEachLED() {
-    for(led = 0; led < numLEDs; led++){
-        currBurstFreq[led] = exp_burstFreq[led][currBlock];
-        currBurstDuration[led] = exp_burstDuration[led][currBlock];
-        updateBurstInterim(led);
-    }
 }
