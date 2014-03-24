@@ -1,6 +1,9 @@
-#include arrayControl.h
+#include "logging.h"
+#include "arrayControl.h"
+#include "experimentParameters.h"
 
 unsigned long currBlockEnds;
+int currBlock = -1;
 
 // --- Block Logic ---
 void startNextBlock() {
@@ -49,11 +52,64 @@ void updateBurstParamsForEachLED() {
     }
 }
 
+// Command Logic
+void interpretInputString(String input) {
+    String command, argin;
+    long int arg;
+    // Remove leading and trailing whitespace
+    input.trim();
+    
+    if (input.length() == 1) {
+        command = input;
+        arg = -1;
+    } else if (input.indexOf(':') == 1) {
+        // parameter value
+        int i = input.indexOf(':');
+        command = input.substring(0, i);
+        argin = input.substring(i+1);
+        argin.trim();
+        arg = argin.toInt();
+    } else {
+        errOut(String("Unexpected Input: \"") + input + String("\""));
+    }
+    executeCommand(command, arg);
+}
 
+void executeCommand(String command, long int arg) {
+  // declared here for use with the pw (pulse width) command
+  switch (command[0]) {
+      // 'S' means start
+      case 'S':
+        runStimulation();
+        break;
+      // 'X' means stop
+      case 'X':
+        stopStimulation();
+        break;
+      default:
+        errOut("Unrecognized command!");
+  }
+}
 
 void setup(){
+  // Assign Pins
+  for(int i = 0; i < numLEDs; i++) {
+    gatePins[i] = i + firstPin;
+  }
 
+  // Initialize Pins
+  for(int pin = 0; pin < numLEDs; pin++) {
+    pinMode(gatePins[pin], OUTPUT);
+  }
+  
+  // Convert block durations to milliseconds
+  for(int block = 0; block < numBlocks; block++) {
+    blockDuration[block] = blockDuration[block]*1000;
+  }
+
+  Serial.begin(9600);
 }
+
 
 void loop() {
   // Set up something to include start conditions.  Button Press?

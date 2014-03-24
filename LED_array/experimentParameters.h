@@ -10,6 +10,7 @@ const int numBlocks = 9;
 
 // The number of LEDs on the array (typically 12)
 const int numLEDs = 12;
+const int firstPin = 7;
 
 // Block Parameters.  Each parameter consists of a list of values corresponding to the
 // value of that parameter in each respective block.
@@ -93,3 +94,6 @@ unsigned long exp_burstDuration[numLEDs][numBlocks] = {
     {800, 800, 800, 800, 800},
     {800, 800, 800, 800, 800}
 };
+
+// Gate Pins for each LED
+int gatePins[numLEDs];

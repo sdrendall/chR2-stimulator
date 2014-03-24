@@ -1,58 +1,27 @@
-#include experimentParameters.h
+#include "experimentParameters.h"
+#include "Arduino.h"
+#include "logging.h"
 
 // --- Global Variables -- Do not modify!! ---///
 
 // Booleans, describing state
 boolean activeExperiment = false;
 boolean manualMode = false;
-boolean ledOn[numLEDs] = false;
-boolean isBursting[numLEDs] = false;
+boolean ledOn[numLEDs], isBursting[numLEDs];
 
 // Event times, for scheduling events
 unsigned long nextLEDEvent[numLEDs], nextBurstEvent[numLEDs];
 
 // Arrays for storing current parameter values for each LED
-float currFreq[numLEDs] = 10;
-float currBurstFreq[numLEDs] = 1;
-unsigned long currPulseWidth[numLEDs] = 10;
-unsigned long currTriggerDelay[numLEDs] = 90;
-unsigned long currBurstDuration[numLEDs] = 500;
-unsigned long currBurstInterim[numLEDs] = 500;
-
+float currFreq[numLEDs];
+float currBurstFreq[numLEDs];
+unsigned long currPulseWidth[numLEDs];
+unsigned long currTriggerDelay[numLEDs];
+unsigned long currBurstDuration[numLEDs];
+unsigned long currBurstInterim[numLEDs];
 
 
 // --- LED LOGIC ---
-void checkForLEDEvents() {
-    // loop through LEDs
-    for(int led = 0; led < numLEDs; led++) {
-        // Toggle LED when necessary, uses us
-        if ((activeExperiment || manualMode) && micros() >= nextLEDEvent[led]) {
-            toggleLED(led);
-        }
-    }
-}
-
-void toggleLED(int led) {
-    if (activeExperiment || manualMode) {
-        scheduleNextLEDEvent(led);
-    }
-    if (ledOn) {
-        turnLEDOff(led);
-    } else {
-        turnLEDOn(led);
-    }
-}
-
-void scheduleNextLEDEvent(int led) {
-  if (ledOn[led]) {
-    // If the light is on, I'm about to turn it off.
-    nextLEDEvent[led] = micros() + currTriggerDelay[led];
-  } else {
-    // If the light is off, I'm about to turn it on
-    nextLEDEvent[led] = micros() + currPulseWidth[led];
-  }
-}
-
 void turnLEDOff(int led) {
     // Incompatible with PWM.  Assumes that LEDs are only being controlled
     // With digitalWrite()
@@ -67,6 +36,38 @@ void turnLEDOn(int led) {
     document("led", 1);
     ledOn = true;
 }
+
+void scheduleNextLEDEvent(int led) {
+  if (ledOn[led]) {
+    // If the light is on, I'm about to turn it off.
+    nextLEDEvent[led] = micros() + currTriggerDelay[led];
+  } else {
+    // If the light is off, I'm about to turn it on
+    nextLEDEvent[led] = micros() + currPulseWidth[led];
+  }
+}
+
+void toggleLED(int led) {
+    if (activeExperiment || manualMode) {
+        scheduleNextLEDEvent(led);
+    }
+    if (ledOn[led]) {
+        turnLEDOff(led);
+    } else {
+        turnLEDOn(led);
+    }
+}
+
+void checkForLEDEvents() {
+    // loop through LEDs
+    for(int led = 0; led < numLEDs; led++) {
+        // Toggle LED when necessary, uses us
+        if ((activeExperiment || manualMode) && micros() >= nextLEDEvent[led]) {
+            toggleLED(led);
+        }
+    }
+}
+
 
 
 // Resets the led's triggerDelay based on its
