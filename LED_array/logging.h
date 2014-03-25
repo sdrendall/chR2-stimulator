@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #ifndef logging_h
 #define logging_h
 
@@ -9,3 +10,9 @@ void errOut(String err);
 void document(String parameter, float value);
 
 #endif
+=======
+void logEvent(String msg);
+void debugOut(String msg);
+void errOut(String err);
+void document(String parameter, float value);
+>>>>>>> master
