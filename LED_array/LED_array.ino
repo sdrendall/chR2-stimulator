@@ -1,8 +1,8 @@
-#include "experimentParameters.h"
-#include "arrayControl.h"
-#include "logging.h"
-
+#include "LED_array.h"
 // --- Global Variables -- Do not modify!! ---///
+
+// Array containing pin numbers
+int gatePins[numLEDs];
 
 // Booleans, describing state
 boolean activeExperiment = false;
@@ -37,7 +37,7 @@ void runStimulation() {
 void stopStimulation() {
   activeExperiment = false;
   manualMode = false;
-  turnLEDOff();
+  turnAllLEDsOff();
   currBlock = -1;
   document("stop", -1);
   logEvent("Stopped Stimulation");
@@ -74,22 +74,39 @@ void startBlock(int block) {
 }
 
 void updateStimParamsForEachLED() {
-    for(led = 0; led < numLEDs; led++){
-        currFreq[led] = exp_stimFrequency[led][currBlock];
+    for(int led = 0; led < numLEDs; led++){
+        currFreq[led] = exp_pulseFreq[led][currBlock];
         currPulseWidth[led] = exp_pulseWidth[led][currBlock];
         updateTriggerDelay(led);
     }
 }
 
 void updateBurstParamsForEachLED() {
-    for(led = 0; led < numLEDs; led++){
+    for(int led = 0; led < numLEDs; led++){
         currBurstFreq[led] = exp_burstFreq[led][currBlock];
         currBurstDuration[led] = exp_burstDuration[led][currBlock];
         updateBurstInterim(led);
     }
 }
 
-// Command Logic
+// Command parsing and execution functions
+// read all available chars to a buffer and interpret any complete lines
+void readAndInterpretAvailableChars() {
+  String serialLine;
+  while (Serial.available() > 0){
+      // read any available characters
+      char ch = Serial.read();
+      if (ch == '\n') {
+        // read any available characters
+        interpretInputString(serialLine);
+        serialLine = "";
+        break; // don't interpret more than one line before returning
+      } else {
+      serialLine += ch;
+    }
+  }
+}
+
 void interpretInputString(String input) {
     String command, argin;
     long int arg;
@@ -128,6 +145,7 @@ void executeCommand(String command, long int arg) {
   }
 }
 
+
 void setup(){
   // Assign Pins
   for(int i = 0; i < numLEDs; i++) {
@@ -137,11 +155,6 @@ void setup(){
   // Initialize Pins
   for(int pin = 0; pin < numLEDs; pin++) {
     pinMode(gatePins[pin], OUTPUT);
-  }
-  
-  // Convert block durations to milliseconds
-  for(int block = 0; block < numBlocks; block++) {
-    blockDuration[block] = blockDuration[block]*1000;
   }
 
   Serial.begin(9600);

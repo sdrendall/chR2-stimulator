@@ -1,3 +1,6 @@
+#ifndef experimentParameters_h
+#define experimentParameters_h
+
 // These are the parameters for the current experiment
 // THIS SHOULD BE THE ONLY FILE EDITED BY THE EXPERIMENTER!!!
 
@@ -16,8 +19,8 @@ const int firstPin = 7;
 // value of that parameter in each respective block.
 // THE NUMBER OF ENTRIES IN EACH LIST MUST BE EQUAL TO numBlocks!
 
-// Block durations, in seconds
-unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
+// Block durations, in MILLISECONDS!
+const unsigned long blockDuration[numBlocks] = {5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000};
 
 
 // ----- Stimulation Parameters ----- //
@@ -32,7 +35,7 @@ unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
 
 
 // The frequency of pulses during each burst - in Hertz
-float exp_pulseFreq[numLEDs][numBlocks] = {
+const float exp_pulseFreq[numLEDs][numBlocks] = {
     {.25, .5, 1, 2, 4},
     {.25, .5, 1, 2, 4},
     {.25, .5, 1, 2, 4},
@@ -48,7 +51,7 @@ float exp_pulseFreq[numLEDs][numBlocks] = {
 };
 
 // The pulse width of each pulse delivered in a burst - in milliseconds
-unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
+const unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
     {2, 2, 2, 2, 2},
     {2, 2, 2, 2, 2},
     {2, 2, 2, 2, 2},
@@ -64,7 +67,7 @@ unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
 };
 
 // The bursting frequency - in Hertz 
-float exp_burstFreq[numLEDs][numBlocks] = {
+const float exp_burstFreq[numLEDs][numBlocks] = {
     {.1, .1, .1, .1, .1},
     {.1, .1, .1, .1, .1},
     {.1, .1, .1, .1, .1},
@@ -80,7 +83,7 @@ float exp_burstFreq[numLEDs][numBlocks] = {
 };
 
 // The burst duration - in milliseconds
-unsigned long exp_burstDuration[numLEDs][numBlocks] = {
+const unsigned long exp_burstDuration[numLEDs][numBlocks] = {
     {800, 800, 800, 800, 800},
     {800, 800, 800, 800, 800},
     {800, 800, 800, 800, 800},
@@ -94,6 +97,4 @@ unsigned long exp_burstDuration[numLEDs][numBlocks] = {
     {800, 800, 800, 800, 800},
     {800, 800, 800, 800, 800}
 };
-
-// Gate Pins for each LED
-int gatePins[numLEDs];
+#endif

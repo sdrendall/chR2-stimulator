@@ -1,5 +1,4 @@
 #include "arrayControl.h"
-// --- Global Variables -- Do not modify!! ---///
 
 // Booleans, describing state
 extern boolean activeExperiment = false;
@@ -17,7 +16,8 @@ extern unsigned long currTriggerDelay[numLEDs];
 extern unsigned long currBurstDuration[numLEDs];
 extern unsigned long currBurstInterim[numLEDs];
 
-extern int gatePins;
+extern int gatePins[numLEDs];
+
 
 
 // --- LED LOGIC ---
@@ -26,16 +26,28 @@ void turnLEDOff(int led) {
     // With digitalWrite()
     digitalWrite(gatePins[led], HIGH);
     document("led", 0);
-    ledOn = false;
+    ledOn[led] = false;
 }
 
 void turnLEDOn(int led) {
     // Doesn't involve PWM.  Turns the LED all the way on
     digitalWrite(gatePins[led], LOW);
     document("led", 1);
-    ledOn = true;
+    ledOn[led] = true;
 }
 
+void turnAllLEDsOff() {
+    for(int led = 0; led < numLEDs; led++) {
+        turnLEDOff(led);
+    }
+}
+
+void turnAllLEDsOn() {
+    for(int led = 0; led < numLEDs; led++) {
+        turnLEDOn(led);
+    }
+}
+    
 void scheduleNextLEDEvent(int led) {
   if (ledOn[led]) {
     // If the light is on, I'm about to turn it off.
@@ -84,7 +96,6 @@ unsigned long calculateTriggerDelay(float freq, unsigned long pw) {
     // Calculate triggerDelay
     unsigned long triggerDelay = period - pw;
     return triggerDelay;
-    }
 }
 
 
@@ -110,23 +121,23 @@ void scheduleNextBurstEvent(int led) {
     // Schedule then next burst event, dependent on the led's bursting state
     // Designed to be immediately followed by a call to stopBursting() or startBursting()
     if (isBursting[led]) {
-        nextBurstEvent[led] = micros() + burstInterim[led];
+        nextBurstEvent[led] = micros() + currBurstInterim[led];
     } else {
-        nextBurstEvent[led] = micros() + burstDuration[led];
+        nextBurstEvent[led] = micros() + currBurstDuration[led];
     }
 } 
 
 void startBursting(int led) {
     // Start new LED train
     toggleLED(led);
-    isBursting = true;
+    isBursting[led] = true;
 }
 
 void stopBursting(int led) {
     // override led schedule
-    nextLEDEvent[led] = micros() + burstInterim[led]*1000;
-    turnLEDoff(led);
-    isBursting = false;
+    nextLEDEvent[led] = micros() + currBurstInterim[led]*1000;
+    turnLEDOff(led);
+    isBursting[led] = false;
 }
 
 // sets the led's currBurstInterim based on its
