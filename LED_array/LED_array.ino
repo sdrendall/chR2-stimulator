@@ -26,6 +26,23 @@ int currBlock = -1;
 
 
 // --- Block Logic ---
+void runStimulation() {
+  logEvent("Starting Stimulation");
+  document("start", -1);
+  manualMode = false;
+  activeExperiment = true;
+  startBlock(0);
+}
+
+void stopStimulation() {
+  activeExperiment = false;
+  manualMode = false;
+  turnLEDOff();
+  currBlock = -1;
+  document("stop", -1);
+  logEvent("Stopped Stimulation");
+}
+
 void startNextBlock() {
   currBlock++;
   // If currBlock has reached numBlocks or is 0
