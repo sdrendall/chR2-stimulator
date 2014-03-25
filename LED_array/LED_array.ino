@@ -1,9 +1,29 @@
-#include "logging.h"
-#include "arrayControl.h"
 #include "experimentParameters.h"
+#include "arrayControl.h"
+#include "logging.h"
 
+// --- Global Variables -- Do not modify!! ---///
+
+// Booleans, describing state
+boolean activeExperiment = false;
+boolean manualMode = false;
+boolean ledOn[numLEDs], isBursting[numLEDs];
+
+// Event times, for scheduling events
+unsigned long nextLEDEvent[numLEDs], nextBurstEvent[numLEDs];
 unsigned long currBlockEnds;
+
+// Arrays for storing current parameter values for each LED
+float currFreq[numLEDs];
+float currBurstFreq[numLEDs];
+unsigned long currPulseWidth[numLEDs];
+unsigned long currTriggerDelay[numLEDs];
+unsigned long currBurstDuration[numLEDs];
+unsigned long currBurstInterim[numLEDs];
+
+// counter, for blocks
 int currBlock = -1;
+
 
 // --- Block Logic ---
 void startNextBlock() {
