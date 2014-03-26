@@ -1,8 +1,8 @@
 #include "arrayControl.h"
 
 // Booleans, describing state
-extern boolean activeExperiment = false;
-extern boolean manualMode = false;
+extern boolean activeExperiment;
+extern boolean manualMode;
 extern boolean ledOn[numLEDs], isBursting[numLEDs];
 
 // Event times, for scheduling events
@@ -17,7 +17,6 @@ extern unsigned long currBurstDuration[numLEDs];
 extern unsigned long currBurstInterim[numLEDs];
 
 extern int gatePins[numLEDs];
-
 
 
 // --- LED LOGIC ---
