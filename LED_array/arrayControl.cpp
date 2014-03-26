@@ -79,25 +79,6 @@ void checkForLEDEvents() {
 }
 
 
-
-// Resets the led's triggerDelay based on its
-// currPulseWidth and currFreq
-void updateTriggerDelay(int led) {
-    currTriggerDelay[led] = calculateTriggerDelay(currFreq[led], currPulseWidth[led]);
-}
-
-// returns the appropriate trigger delay (in us) based on the given freq and pw
-unsigned long calculateTriggerDelay(float freq, unsigned long pw) {
-    // Hz to ms
-    unsigned long tFreq = (1/freq)*1000;
-    // ms to us
-    unsigned long period = tFreq*1000;
-    // Calculate triggerDelay
-    unsigned long triggerDelay = period - pw;
-    return triggerDelay;
-}
-
-
 // --- BURST LOGIC ---
 void checkForBurstEvents() {
     for (int led = 0; led < numLEDs; led++) {
