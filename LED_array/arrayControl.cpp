@@ -79,7 +79,6 @@ void checkForLEDEvents() {
 }
 
 
-
 // --- BURST LOGIC ---
 void checkForBurstEvents() {
     if ((activeExperiment || manualMode) {
