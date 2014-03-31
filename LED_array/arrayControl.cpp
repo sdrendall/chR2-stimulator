@@ -72,7 +72,7 @@ void checkForLEDEvents() {
     // loop through LEDs
     for(int led = 0; led < numLEDs; led++) {
         // Toggle LED when necessary, uses us
-        if (isBursting[led]) && micros() >= nextLEDEvent[led]) {
+        if (isBursting[led] && micros() >= nextLEDEvent[led]) {
             toggleLED(led);
         }
     }
@@ -81,9 +81,9 @@ void checkForLEDEvents() {
 
 // --- BURST LOGIC ---
 void checkForBurstEvents() {
-    if ((activeExperiment || manualMode) {
+    if (activeExperiment || manualMode) {
         for (int led = 0; led < numLEDs; led++) {
-             if millis() >= nextBurstEvent[led]) {
+             if (millis() >= nextBurstEvent[led]) {
                 toggleBurstState(led);
             }
         }

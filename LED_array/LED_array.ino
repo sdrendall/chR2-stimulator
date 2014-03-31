@@ -37,6 +37,9 @@ void runStimulation() {
 void stopStimulation() {
   activeExperiment = false;
   manualMode = false;
+  for(int led = 0; led < numLEDs; led++){
+    isBursting[led] = false;
+  }
   turnAllLEDsOff();
   currBlock = -1;
   document("stop", -1);
@@ -157,6 +160,13 @@ void executeCommand(String command, long int arg) {
       case 'X':
         stopStimulation();
         break;
+      // 'O' means on
+      case 'O':
+        turnAllLEDsOn();
+        break;
+      case 'F':
+        turnAllLEDsOff();
+        break;
       default:
         errOut("Unrecognized command!");
   }
@@ -173,6 +183,8 @@ void setup(){
   for(int pin = 0; pin < numLEDs; pin++) {
     pinMode(gatePins[pin], OUTPUT);
   }
+
+  turnAllLEDsOff();
 
   Serial.begin(9600);
 }

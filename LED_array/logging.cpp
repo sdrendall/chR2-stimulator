@@ -25,6 +25,8 @@ void errOut(String err) {
 } 
 
 void document(String parameter, float value) {
+  // Temporarily disabled
+  return
   if (parameter == "start") {
     startTime = millis();
   }
