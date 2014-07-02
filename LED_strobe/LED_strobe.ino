@@ -93,7 +93,7 @@ void errOut(String err) {
   Serial.println(err);
 } 
 
-void document(String parameter, float value) {
+void logData(String parameter, float value) {
   if (parameter == "start") {
     startTime = millis();
   }
@@ -120,18 +120,19 @@ void turnLEDOff() {
   // digitalWrite alone will fail under certain PWM conditions
   pinMode(gatePin, OUTPUT);
   digitalWrite(gatePin, HIGH);
-  document("led", 0);
+  logData("led", 0);
   ledOn = false;
 }
 
 void turnLEDOn() {
   // Use a global for current power
-  resetLEDPower();
-  document("led", currPower);
+  setLEDToCurrPower();
+  logData("led", currPower);
   ledOn = true;
 }
 
 void updatePulseFrequency(float freq) {
+  // Called to set the frequency, uses the current pulse width
   currFreq = freq;
   updatePulseWidth(currPulseWidth/1000); // Function takes pulse width in milliseconds
 }
@@ -161,12 +162,12 @@ void updateCurrPower(float power) {
   currPower = power;
   // Reset the LED's output if it is already on
   if (ledOn) {
-    resetLEDPower();
+    setLEDToCurrPower();
   }
 }
 
 // resets the LED's power to currPower
-void resetLEDPower() {
+void setLEDToCurrPower() {
   if (currPower == 0) {
     turnLEDOff();
   } else {
@@ -183,7 +184,7 @@ void resetLEDPower() {
 // State control functions
 void runStimulation() {
   logEvent("Starting Stimulation");
-  document("start", -1);
+  logData("start", -1);
   manualMode = false;
   activeExperiment = true;
   startBlock(0);
@@ -194,7 +195,7 @@ void stopStimulation() {
   manualMode = false;
   turnLEDOff();
   currBlock = -1;
-  document("stop", -1);
+  logData("stop", -1);
   logEvent("Stopped Stimulation");
 }
 
@@ -239,7 +240,7 @@ void startManualMode() {
 
 void startPulsing() {
   logEvent("Starting Manual Pulse");
-  document("start", -1);
+  logData("start", -1);
   if (! manualMode) {
     startManualMode();
   }

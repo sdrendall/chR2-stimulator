@@ -61,7 +61,7 @@ class TeensyProtocol(LineReceiver):
         df, self.data = self.data, None
         df.close()
 
-    def isData(self,line):
+    def isData(self, line):
         if line.split()[0] == "data":
            return True
         else:
