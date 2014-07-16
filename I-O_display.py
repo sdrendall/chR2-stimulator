@@ -9,8 +9,8 @@ from math import floor
 import os, sys, datetime
 import subprocess as sp
 
-# The port on ubuntu.  We'll change this later
-teensyPort = "/dev/tty.usbmodem12341"
+# The serial port the teensy is connected to
+teensyPort = "COM3"
 
 # The Root object, he ties it all together
 class Root(object):
@@ -26,7 +26,7 @@ class TeensyProtocol(LineReceiver):
 
     def __init__(self, root):
         self.log = openLogFile()
-        self.data = None
+        self.dataFile = None
         self.root = root
 
 
@@ -44,22 +44,29 @@ class TeensyProtocol(LineReceiver):
     def logData(self, line):
         timestamp, event, value = line.split()[1:]
         if event == "start":
-            if self.data is not None:
+            if self.dataFile is not None:
                 self.closeDataFile()
-            self.data = openDataFile()
+            self.dataFile = openDataFile()
         elif event == "stop":
-            if self.data:
-                self.closeDataFile()
+            self.closeDataFile()
         elif event == "led":
-            if not self.data:
-                self.data = openDataFile()
-            dataLine = "{},{}".format(timestamp, value)
-            dataLine = dataLine + os.linesep
-            self.data.write(dataLine)
+            self.writeLineToDataFile(timestamp, value)
+
+    def writeLineToDataFile(self, timestamp, value):
+        if not self.dataFile:
+            self.dataFile = openDataFile()
+        dataLine = self.generateDataLine(timestamp, value)
+        self.dataFile.write(dataLine)
+
+    def generateDataLine(self, timestamp, value):
+        now = datetime.datetime.now()
+        line = '{},{},{}'.format(timestamp, value, now)
+        return line + os.linesep
 
     def closeDataFile(self):
-        df, self.data = self.data, None
-        df.close()
+        if self.dataFile:
+            df, self.dataFile = self.dataFile, None
+            df.close()
 
     def isData(self, line):
         if line.split()[0] == "data":
