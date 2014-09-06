@@ -66,6 +66,22 @@ const unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
     {10}
 };
 
+// Percentage of maximum power to drive each LED with - in %
+const unsigned int exp_stimPower[numLEDs][numBlocks] = {
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100},
+    {100}
+};
+
 // The bursting frequency - in Hertz 
 const float exp_burstFreq[numLEDs][numBlocks] = {
     {.0033},

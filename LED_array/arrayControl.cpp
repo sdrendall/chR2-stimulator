@@ -15,23 +15,33 @@ extern unsigned long currPulseWidth[numLEDs];
 extern unsigned long currTriggerDelay[numLEDs];
 extern unsigned long currBurstDuration[numLEDs];
 extern unsigned long currBurstInterim[numLEDs];
+extern unsigned int currStimPower[numLEDs];
+extern unsigned int currPwmDutyCycle[numLEDs];
 
 extern int gatePins[numLEDs];
 
 
 // --- LED LOGIC ---
 void turnLEDOff(int led) {
-    // Incompatible with PWM.  Assumes that LEDs are only being controlled
-    // With digitalWrite()
+    // pinMode(OUTPUT) must be called for each LED to allow for PWM.
+    // hopefully this won't slow things down too much
+    pinMode(gatePins[led], OUTPUT);
     digitalWrite(gatePins[led], HIGH);
     document(String("led"), 0);
     ledOn[led] = false;
 }
 
 void turnLEDOn(int led) {
-    // Doesn't involve PWM.  Turns the LED all the way on
-    digitalWrite(gatePins[led], LOW);
-    document(String("led"), 1);
+    // pinMode(OUTPUT) to allow for pins in analog or digital mode
+    pinMode(gatePins[led], OUTPUT);
+    if (currStimPower[led] == 100) {
+        digitalWrite(gatePins[led], LOW);
+    } else if (currStimPower[led] > 0) {
+        analogWrite(gatePins[led], currPwmDutyCycle[led]);
+    } else { // currStimPower[led] == 0
+        digitalWrite(gatePins[led], HIGH);
+    }
+    document(String("led"), currStimPower[led]);
     ledOn[led] = true;
 }
 
@@ -77,7 +87,6 @@ void checkForLEDEvents() {
         }
     }
 }
-
 
 // --- BURST LOGIC ---
 void checkForBurstEvents() {

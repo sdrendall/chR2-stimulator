@@ -20,6 +20,8 @@ unsigned long currPulseWidth[numLEDs];
 unsigned long currTriggerDelay[numLEDs];
 unsigned long currBurstDuration[numLEDs];
 unsigned long currBurstInterim[numLEDs];
+unsigned int currStimPower[numLEDs];
+unsigned int currPwmDutyCycle[numLEDs];
 
 // counter, for blocks
 int currBlock = -1;
@@ -81,6 +83,8 @@ void updateStimParamsForEachLED() {
         currFreq[led] = exp_pulseFreq[led][currBlock];
         currPulseWidth[led] = exp_pulseWidth[led][currBlock]*1000;  // convert ms to us
         updateTriggerDelay(led);
+        currStimPower[led] = exp_stimPower[led][currBlock];
+        currPwmDutyCycle[led] = 255 - (currStimPower[led]/100)*255;
     }
 }
 
