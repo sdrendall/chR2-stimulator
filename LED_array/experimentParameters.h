@@ -12,7 +12,7 @@
 const int numBlocks = 1;
 
 // The number of LEDs on the array (typically 12)
-const int numLEDs = 12;
+const int numLEDs = 7;
 const int firstPin = 4;
 
 // Block Parameters.  Each parameter consists of a list of values corresponding to the
@@ -36,59 +36,39 @@ const unsigned long blockDuration[numBlocks] = {10800000};
 
 // The frequency of pulses during each burst - in Hertz
 const float exp_pulseFreq[numLEDs][numBlocks] = {
-    {10},
-    {5},
     {1},
-    {10},
-    {5},
     {1},
-    {10},
-    {5},
     {1},
-    {10},
-    {5},
+    {1},
+    {1},
+    {1},
     {1}
 };
 
 // The pulse width of each pulse delivered in a burst - in milliseconds
 const unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10}
+    {500},
+    {500},
+    {500},
+    {500},
+    {500},
+    {500},
+    {500}
 };
 
 // Percentage of maximum power to drive each LED with - in %
 const unsigned int exp_stimPower[numLEDs][numBlocks] = {
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100}
+    {20},
+    {40},
+    {60},
+    {80},
+    {40},
+    {30},
+    {20}
 };
 
 // The bursting frequency - in Hertz 
 const float exp_burstFreq[numLEDs][numBlocks] = {
-    {.0033},
-    {.0033},
-    {.0033},
-    {.0033},
-    {.0033},
     {.0033},
     {.0033},
     {.0033},
@@ -100,11 +80,6 @@ const float exp_burstFreq[numLEDs][numBlocks] = {
 
 // The burst duration - in milliseconds
 const unsigned long exp_burstDuration[numLEDs][numBlocks] = {
-    {300000},
-    {300000},
-    {300000},
-    {300000},
-    {300000},
     {300000},
     {300000},
     {300000},

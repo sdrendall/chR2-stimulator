@@ -84,7 +84,7 @@ void updateStimParamsForEachLED() {
         currPulseWidth[led] = exp_pulseWidth[led][currBlock]*1000;  // convert ms to us
         updateTriggerDelay(led);
         currStimPower[led] = exp_stimPower[led][currBlock];
-        currPwmDutyCycle[led] = 255 - (currStimPower[led]/100)*255;
+        currPwmDutyCycle[led] = 255 - (currStimPower[led]/100.0)*255;
     }
 }
 
@@ -179,9 +179,18 @@ void executeCommand(String command, long int arg) {
 
 void setup(){
   // Assign Pins
-  for(int i = 0; i < numLEDs; i++) {
-    gatePins[i] = i + firstPin;
-  }
+  //for(int i = 0; i < numLEDs; i++) {
+  //  gatePins[i] = i + firstPin;
+  //}
+
+  // All the pwm pins
+  gatePins[0] = 4;
+  gatePins[1] = 5;
+  gatePins[2] = 9;
+  gatePins[3] = 10;
+  gatePins[4] = 12;
+  gatePins[5] = 14;
+  gatePins[6] = 15;
 
   // Initialize Pins
   for(int pin = 0; pin < numLEDs; pin++) {

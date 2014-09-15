@@ -23,21 +23,18 @@ extern int gatePins[numLEDs];
 
 // --- LED LOGIC ---
 void turnLEDOff(int led) {
-    // pinMode(OUTPUT) must be called for each LED to allow for PWM.
-    // hopefully this won't slow things down too much
-    pinMode(gatePins[led], OUTPUT);
-    digitalWrite(gatePins[led], HIGH);
+    digitalWrite(gatePins[led], HIGH);    
     document(String("led"), 0);
     ledOn[led] = false;
 }
 
 void turnLEDOn(int led) {
-    // pinMode(OUTPUT) to allow for pins in analog or digital mode
-    pinMode(gatePins[led], OUTPUT);
     if (currStimPower[led] == 100) {
         digitalWrite(gatePins[led], LOW);
     } else if (currStimPower[led] > 0) {
         analogWrite(gatePins[led], currPwmDutyCycle[led]);
+        debugOut(String("led: ") + String(led));
+        debugOut(String(currPwmDutyCycle[led]));
     } else { // currStimPower[led] == 0
         digitalWrite(gatePins[led], HIGH);
     }

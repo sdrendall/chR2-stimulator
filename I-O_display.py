@@ -10,7 +10,7 @@ import os, sys, datetime
 import subprocess as sp
 
 # The serial port the teensy is connected to
-teensyPort = "COM3"
+teensyPort = "/dev/ttyACM0"
 
 # The Root object, he ties it all together
 class Root(object):
