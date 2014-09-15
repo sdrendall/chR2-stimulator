@@ -190,7 +190,6 @@ void setup(){
   gatePins[3] = 10;
   gatePins[4] = 12;
   gatePins[5] = 14;
-  gatePins[6] = 15;
 
   // Initialize Pins
   for(int pin = 0; pin < numLEDs; pin++) {
