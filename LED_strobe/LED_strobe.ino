@@ -13,7 +13,7 @@ const int numBlocks = 9;
 unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
 
 // Pulse width in milliseconds
-unsigned long pulseWidth[numBlocks] = {10, 10, 10, 10, 0, 20, 20, 250, 250};
+float pulseWidth[numBlocks] = {10, 10, 10, 10, 0, 20, 20, 250, 250};
 
 // Stimulation Frequency in Hz
 float stimFrequency[numBlocks] = {1, 2, 3, 5, 1, 5, 4, .5, .25};
