@@ -33,8 +33,8 @@ void turnLEDOn(int led) {
         digitalWrite(gatePins[led], LOW);
     } else if (currStimPower[led] > 0) {
         analogWrite(gatePins[led], currPwmDutyCycle[led]);
-        debugOut(String("led: ") + String(led));
-        debugOut(String(currPwmDutyCycle[led]));
+        // debugOut(String("led: ") + String(led));
+        // debugOut(String(currPwmDutyCycle[led]));
     } else { // currStimPower[led] == 0
         digitalWrite(gatePins[led], HIGH);
     }

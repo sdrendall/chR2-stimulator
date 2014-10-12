@@ -9,7 +9,7 @@
 // The number of blocks in the experiment.
 // Each block represents a specific stimulation frequency and pulse width
 // Over a specified duration
-const int numBlocks = 1;
+const int numBlocks = 7;
 
 // The number of LEDs on the array (typically 12)
 const int numLEDs = 6;
@@ -20,7 +20,7 @@ const int firstPin = 4;
 // THE NUMBER OF ENTRIES IN EACH LIST MUST BE EQUAL TO numBlocks!
 
 // Block durations, in MILLISECONDS!
-const unsigned long blockDuration[numBlocks] = {7200000};
+const unsigned long blockDuration[numBlocks] = {10000, 30000, 7200000, 7200000, 3600000, 1800000, 1800000};
 
 
 // ----- Stimulation Parameters ----- //
@@ -36,51 +36,51 @@ const unsigned long blockDuration[numBlocks] = {7200000};
 
 // The frequency of pulses during each burst - in Hertz
 const float exp_pulseFreq[numLEDs][numBlocks] = {
-    {10},
-    {10},
-    {10},
-    {10},
-    {10},
-    {10}
+    {10, 0, 0, 0, 10, 10, 10},
+    {10, 0, 10, 10, 10, 10, 10},
+    {10, 0, 0, 0, 0, 0, 0},
+    {10, 0, 0, 10, 10, 10, 10},
+    {10, 0, 0, 0, 0, 0, 10},
+    {10, 0, 0, 0, 0, 10, 10}
 };
 
 // The pulse width of each pulse delivered in a burst - in milliseconds
 const unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
-    {5},
-    {5},
-    {5},
-    {5},
-    {5},
-    {5}
+    {1, 0, 0, 0, 5, 5, 5},
+    {1, 0, 5, 5, 5, 5, 5},
+    {1, 0, 0, 0, 0, 0, 0},
+    {1, 0, 0, 5, 5, 5, 5},
+    {1, 0, 0, 0, 0, 0, 5},
+    {1, 0, 0, 0, 0, 5, 5}
 };
 
 // Percentage of maximum power to drive each LED with - in %
 const unsigned int exp_stimPower[numLEDs][numBlocks] = {
-    {100},
-    {100},
-    {100},
-    {100},
-    {100},
-    {100}
+    {100, 0, 0, 0, 100, 100, 100},
+    {100, 0, 100, 100, 100, 100, 1000},
+    {100, 0, 0, 0, 0, 0, 0},
+    {100, 0, 0, 100, 100, 100, 100},
+    {100, 0, 0, 0, 0, 0, 100},
+    {100, 0, 0, 0, 0, 100, 100}
 };
 
 // The bursting frequency - in Hertz 
 const float exp_burstFreq[numLEDs][numBlocks] = {
-    {.0033},
-    {.0033},
-    {.0033},
-    {.0033},
-    {.0033},
-    {.0033}
+    {.0033, 0, 0, 0, .0033, .0033, .0033},
+    {.0033, 0, .0033, .0033, .0033, .0033, .0033},
+    {.0033, 0, 0, 0, 0, 0, 0},
+    {.0033, 0, 0, .0033, .0033, .0033, .0033},
+    {.0033, 0, 0, 0, 0, 0, .0033},
+    {.0033, 0, 0, 0, 0, .0033, .0033}
 };
 
 // The burst duration - in milliseconds
 const unsigned long exp_burstDuration[numLEDs][numBlocks] = {
-    {300000},
-    {300000},
-    {300000},
-    {300000},
-    {300000},
-    {300000}    
+    {300000, 0, 0, 0, 300000, 300000, 300000},
+    {300000, 0, 300000, 300000, 300000, 300000, 300000},
+    {300000, 0, 0, 0, 0, 0, 0},
+    {300000, 0, 0, 300000, 300000, 300000, 300000},
+    {300000, 0, 0, 0, 0, 0, 300000},
+    {300000, 0, 0, 0, 0, 300000, 300000}    
     };
 #endif
