@@ -184,12 +184,12 @@ void setup(){
   //}
 
   // All the pwm pins
-  gatePins[0] = 4;
-  gatePins[1] = 5;
-  gatePins[2] = 9;
-  gatePins[3] = 10;
-  gatePins[4] = 12;
-  gatePins[5] = 14;
+  gatePins[0] = 10;
+  gatePins[1] = 12;
+  gatePins[2] = 14;
+  gatePins[3] = 4;
+  gatePins[4] = 5;
+  gatePins[5] = 9;
 
   // Initialize Pins
   for(int pin = 0; pin < numLEDs; pin++) {
