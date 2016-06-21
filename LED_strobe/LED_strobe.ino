@@ -40,8 +40,8 @@ boolean manualMode = false;
 boolean ledOn = true;
 
 // containers for PWM
-float maxPower = 255*75/100;
-const int gatePin = 22;
+float maxPower = 255; // Can be used to limit the maximum power output by the device
+const int gatePin = 15;
 
 // global variables used as output parameters, set to defaults
 float currPower = 40; //% of maxPower
