@@ -3,23 +3,38 @@
 // The number of blocks in the experiment.
 // Each block represents a specific stimulation frequency and pulse width
 // Over a specified duration
-const int numBlocks = 9;
+const int numBlocks = 11;
 
 // Block Parameters.  Each parameter consists of a list of values corresponding to the
 // value of that parameter in each respective block.
 // THE NUMBER OF ENTRIES IN EACH LIST MUST BE EQUAL TO numBlocks!
 
+/*
+// FULL POWER CURVE //
 // Block durations, in seconds
-unsigned long blockDuration[numBlocks] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
+unsigned long blockDuration[numBlocks] = {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15};
 
 // Pulse width in milliseconds
-float pulseWidth[numBlocks] = {10, 10, 10, 10, 0, 20, 20, 250, 250};
+float pulseWidth[numBlocks] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 // Stimulation Frequency in Hz
-float stimFrequency[numBlocks] = {1, 2, 3, 5, 1, 5, 4, .5, .25};
+float stimFrequency[numBlocks] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 // Stimulation power (percentage)
-float stimPower[numBlocks] = {40, 45, 50, 60, 0, 25, 50, 75, 100};
+float stimPower[numBlocks] = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+*/
+
+
+unsigned long blockDuration[numBlocks] = {60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60};
+
+// Pulse width in milliseconds
+float pulseWidth[numBlocks] = {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000};
+
+// Stimulation Frequency in Hz
+float stimFrequency[numBlocks] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
+// Stimulation power (percentage)
+float stimPower[numBlocks] = {0, 2, 4, 6, 8, 10, 15, 20, 40, 80, 100};
 
 
 // ----- Program Parameters (do not edit) -----//
@@ -44,7 +59,7 @@ float maxPower = 255; // Can be used to limit the maximum power output by the de
 const int gatePin = 15;
 
 // global variables used as output parameters, set to defaults
-float currPower = 40; //% of maxPower
+float currPower = 50; //% of maxPower
 float currFreq = 1;
 unsigned long currTriggerDelay = 800;
 unsigned long currPulseWidth = 200;
@@ -59,7 +74,7 @@ void calculateTriggerDelayForEachBlock() {
 }
 
 // returns a trigger delay value based on a given frequency and pulse width
-unsigned long calculateTriggerDelay (float freq, unsigned long pw) {
+unsigned long calculateTriggerDelay(float freq, unsigned long pw) {
   // Convert Hz to us
   // Convert float to long first
   // Hz to ms
@@ -116,16 +131,17 @@ void toggleLED() {
 }
 
 void turnLEDOff() {
-  // Have to do something about setting power here...
-  // digitalWrite alone will fail under certain PWM conditions
-  pinMode(gatePin, OUTPUT);
-  digitalWrite(gatePin, HIGH);
+  // Use a global for current power
+  // setLEDToCurrPower();
+  digitalWrite(gatePin, LOW);
   logData("led", 0);
   ledOn = false;
 }
 
 void turnLEDOn() {
-  // Use a global for current power
+  // Have to do something about setting power here...
+  // digitalWrite alone will fail under certain PWM conditions
+  pinMode(gatePin, OUTPUT);
   setLEDToCurrPower();
   logData("led", currPower);
   ledOn = true;
@@ -173,7 +189,7 @@ void setLEDToCurrPower() {
   } else {
     // LED state is inverse to the pin's state
     // invert power value here
-    int dc = 255 - (currPower/100)*255;
+    int dc = (currPower/100)*255;
     // Reset pin to avoid bugs
     pinMode(gatePin, OUTPUT);
     // Set new PWM duty cycle
@@ -317,7 +333,7 @@ void executeCommand(String command, long int arg) {
         break;     
       // 'R' changes the pwm frequency  
       case 'R':
-        analogWriteFrequency(gatePin, int(arg));
+        // analogWriteFrequency(gatePin, int(arg)); // Not supported by Teensy 2.0
         break;
       // 'H' changes the pulse frequency
       case 'H':
@@ -350,7 +366,7 @@ void executeCommand(String command, long int arg) {
 void setup() {
   // Set up PWM
   pinMode(gatePin, OUTPUT);
-  analogWriteFrequency(gatePin, 200);
+  // analogWriteFrequency(gatePin, 200); // Not supported by teensy 2.0
   turnLEDOff();
   
   // Convert block durations to milliseconds
