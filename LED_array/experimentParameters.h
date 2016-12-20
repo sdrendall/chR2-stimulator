@@ -36,22 +36,22 @@ const unsigned long blockDuration[numBlocks] = {7200000};
 
 // The frequency of pulses during each burst - in Hertz
 const float exp_pulseFreq[numLEDs][numBlocks] = {
+    {15},
+    {15},
+    {15},
+    {15},
+    {15},
+    {15}
+};
+
+// The pulse width of each pulse delivered in a burst - in milliseconds
+const unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
     {10},
     {10},
     {10},
     {10},
     {10},
     {10}
-};
-
-// The pulse width of each pulse delivered in a burst - in milliseconds
-const unsigned long exp_pulseWidth[numLEDs][numBlocks] = {
-    {5},
-    {5},
-    {5},
-    {5},
-    {5},
-    {5}
 };
 
 // Percentage of maximum power to drive each LED with - in %
@@ -82,5 +82,5 @@ const unsigned long exp_burstDuration[numLEDs][numBlocks] = {
     {300000},
     {300000},
     {300000}    
-    };
+};
 #endif
